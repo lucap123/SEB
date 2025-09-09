@@ -1,17 +1,5 @@
 const latest_version = "3";
 var checked = false;
-var correctPassword = "lucapns";
-var passwordModalHTML = `
-  <div class="password-modal">
-    <div class="password-modal-content">
-      <h2>Enter Password</h2>
-      <input type="password" id="passwordInput" placeholder="Password" class="password-input">
-      <button id="submitPassword" class="submit-btn">Submit</button>
-      <p id="passwordError" class="error-message"></p>
-    </div>
-  </div>
-`;
-
 var dialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
@@ -89,15 +77,12 @@ var dialogInnerHTML = `
 // Add event listener for F9 key to open the dialog
 document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
-    showPasswordModal();
+    checked = false;
+    version(latest_version);
+    document.getElementById("SEB_Hijack").showModal();
   }
 });
-document.getElementById("submitPassword").addEventListener("click", checkPasswordAndShowDialog);
-document.getElementById("passwordInput").addEventListener("keypress", (event) => {
-  if (event.key === "Enter") {
-    checkPasswordAndShowDialog();
-  }
-});
+
 function responseFunction(response) {
   checked = true;
   if (response == true) {
@@ -256,12 +241,7 @@ function setupEventListeners() {
     });
   }
 }
-// Create and append password modal
-const passwordModal = document.createElement("div");
-passwordModal.innerHTML = passwordModalHTML;
-passwordModal.id = "passwordModal";
-passwordModal.style.display = "none";
-document.body.appendChild(passwordModal);
+
 // Create the dialog element
 const dialog = document.createElement("dialog");
 
@@ -292,40 +272,7 @@ style.textContent = `
     backdrop-filter: blur(10px);
     overflow: hidden;
   }
-  .password-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  .password-modal-content {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    padding: 30px;
-    border-radius: 15px;
-    width: 350px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  }
-  .password-modal-content h2 {
-    color: #ffffff;
-    margin-bottom: 20px;
-    font-size: 20px;
-  }
-  .password-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    box-sizing: border-box;
-  }
+
   .header-section {
     display: flex;
     justify-content: space-between;
@@ -396,27 +343,7 @@ style.textContent = `
     align-items: flex-start;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
-  .submit-btn {
-    background: linear-gradient(45deg, #4facfe, #00f2fe);
-    border: none;
-    color: #ffffff;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    font-size: 16px;
-  }
-  .submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
-  }
-  .error-message {
-    color: #ff4757;
-    margin-top: 10px;
-    font-size: 14px;
-  }
+
   .banner-icon {
     font-size: 24px;
     margin-top: 2px;
@@ -746,26 +673,7 @@ function createPDf() {
       });
     });
 }
-function showPasswordModal() {
-  passwordModal.style.display = "flex";
-  document.getElementById("passwordInput").value = "";
-  document.getElementById("passwordError").textContent = "";
-}
-// Hide password modal
-function hidePasswordModal() {
-  passwordModal.style.display = "none";
-}
-function checkPasswordAndShowDialog() {
-  const enteredPassword = document.getElementById("passwordInput").value;
-  if (enteredPassword === correctPassword) {
-    hidePasswordModal();
-    checked = false;
-    version(latest_version);
-    document.getElementById("SEB_Hijack").showModal();
-  } else {
-    document.getElementById("passwordError").textContent = "Incorrect password. Try again.";
-  }
-}
+
 function showurl() {
   var url = window.location.href;
   document.getElementById("urlInput").value = url;
