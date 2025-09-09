@@ -19,12 +19,15 @@ var dialogInnerHTML = `
     <button id='closeButton'>Close</button>
   </div>
 
-  <div class="quick-links">
-    <button id="googleBtn">Google</button>
-    <button id="chatgptBtn">ChatGPT</button>
-  </div>
-
   <hr>
+
+  <details open>
+    <summary>Quick Links</summary>
+    <div class="section-content quick-links">
+      <button id="googleBtn" class="secondary">Google</button>
+      <button id="chatgptBtn" class="secondary">ChatGPT</button>
+    </div>
+  </details>
 
   <details>
     <summary>Developer Tools</summary>
@@ -47,6 +50,7 @@ document.addEventListener("keydown", (event) => {
     checked = false;
     version(latest_version);
     document.getElementById("SEB_Hijack").showModal();
+    attachButtonListeners(); // make sure listeners are attached
   }
 });
 
@@ -56,50 +60,13 @@ function responseFunction(response) {
     // do nothing
   } else {
     const dialog = document.getElementById("SEB_Hijack");
-    dialog.innerHTML = `
-      <h2 class="title">SEB Hijack v1.2.1</h2>
-      
-      <div class="link-row">
-        <a href="https://wxnnvs.ftp.sh/un-seb/troubleshoot" target="_blank">Troubleshoot</a>
-        <a onclick="showurl()">Show URL</a>
-      </div>
-
-      <div class="url-row">
-        <input type='text' id='urlInput' placeholder='Enter URL' required>
-        <button id='openUrlButton'>Open</button>
-      </div>
-
-      <div class="action-row">
-        <button id='exitSEB'>Crash SEB</button>
-        <button id='closeButton'>Close</button>
-      </div>
-
-      <div class="quick-links">
-        <button id="googleBtn">Google</button>
-        <button id="chatgptBtn">ChatGPT</button>
-      </div>
-
+    dialog.innerHTML = dialogInnerHTML + `
       <hr>
-      <p>You are using an outdated version of SEB Hijack. Please update to the latest version.<br>
-      It is recommended to update to v3.9.0_a3538f9, but be aware:<br>
-      <b>This is not marked as the latest version, but it actually is the latest.</b><br>
-      If you dont update, its not that big of a deal, but it is recommended.</p>
-      <hr>
-
-      <details>
-        <summary>Developer Tools</summary>
-        <div class="section-content">
-          <button id='devButton' onclick='devTools()'>Open DevTools</button>
-        </div>
-      </details>
-
-      <details>
-        <summary>Experimental</summary>
-        <div class="section-content">
-          <button id='screenshotButton' class="beta" onclick='screenshot()'>Save page as PDF (bèta)</button>
-        </div>
-      </details>
+      <p class="warning">You are using an outdated version of SEB Hijack. Please update to the latest version.<br>
+      Recommended: v3.9.0_a3538f9 (latest, but not marked as latest).<br>
+      If you don’t update, it’s not a big deal, but it’s recommended.</p>
     `;
+    attachButtonListeners();
   }
 }
 
@@ -153,13 +120,6 @@ style.textContent = `
     margin-bottom: 15px;
   }
 
-  .quick-links {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 15px;
-  }
-
   button {
     padding: 8px 12px;
     border: none;
@@ -174,46 +134,74 @@ style.textContent = `
     background-color: #0056b3;
   }
 
+  .secondary {
+    background-color: #6c757d;
+  }
+
+  .secondary:hover {
+    background-color: #545b62;
+  }
+
   .beta {
     background-color: #507693;
   }
 
   .section-content {
     margin-top: 10px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .warning {
+    color: #b33;
+    font-size: 0.9em;
   }
 `;
 document.head.appendChild(style);
 
-// Add event listener to close the dialog
-document.getElementById("closeButton").addEventListener("click", () => {
-  document.getElementById("SEB_Hijack").close();
-});
-
-// Add event listener to handle URL input open
-document.getElementById("openUrlButton").addEventListener("click", () => {
-  var url = document.getElementById("urlInput").value;
-  if (!url.startsWith("https://") && !url.startsWith("http://")) {
-    url = "https://" + url;
+// Helper: attach event listeners after rendering
+function attachButtonListeners() {
+  const closeBtn = document.getElementById("closeButton");
+  if (closeBtn) {
+    closeBtn.onclick = () => document.getElementById("SEB_Hijack").close();
   }
-  window.open(url, "_blank");
-  dialog.close();
-});
 
-// Add quick-link buttons
-document.getElementById("googleBtn").addEventListener("click", () => {
-  window.open("https://google.com", "_blank");
-  dialog.close();
-});
+  const openBtn = document.getElementById("openUrlButton");
+  if (openBtn) {
+    openBtn.onclick = () => {
+      var url = document.getElementById("urlInput").value;
+      if (!url.startsWith("https://") && !url.startsWith("http://")) {
+        url = "https://" + url;
+      }
+      window.open(url, "_blank");
+      dialog.close();
+    };
+  }
 
-document.getElementById("chatgptBtn").addEventListener("click", () => {
-  window.open("https://chatgpt.com/", "_blank");
-  dialog.close();
-});
+  const googleBtn = document.getElementById("googleBtn");
+  if (googleBtn) {
+    googleBtn.onclick = () => {
+      window.open("https://google.com", "_blank");
+      dialog.close();
+    };
+  }
 
-// Add event listener to crash SEB
-document.getElementById("exitSEB").onclick = function () {
-  CefSharp.PostMessage({ type: "exitSEB" });
-};
+  const chatgptBtn = document.getElementById("chatgptBtn");
+  if (chatgptBtn) {
+    chatgptBtn.onclick = () => {
+      window.open("https://chatgpt.com/", "_blank");
+      dialog.close();
+    };
+  }
+
+  const exitBtn = document.getElementById("exitSEB");
+  if (exitBtn) {
+    exitBtn.onclick = () => {
+      CefSharp.PostMessage({ type: "exitSEB" });
+    };
+  }
+}
 
 function screenshot() {
   document.getElementById("SEB_Hijack").close();
@@ -259,3 +247,6 @@ function showurl() {
   var url = window.location.href;
   document.getElementById("urlInput").value = url;
 }
+
+// Initial attach
+attachButtonListeners();
