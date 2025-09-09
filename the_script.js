@@ -432,19 +432,13 @@ style.textContent = `
     border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
-  .input-icon {
-    font-size: 18px;
-    margin-left: 15px;
-    opacity: 0.7;
-  }
-
   .url-input {
     flex: 1;
     background: transparent;
     border: none;
     color: #ffffff;
     font-size: 15px;
-    padding: 15px 0;
+    padding: 15px 15px;
     outline: none;
   }
 
