@@ -1,10 +1,8 @@
 const latest_version = "3";
 var checked = false;
-
 var dialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
-      <div class="logo-icon">⚡</div>
       <h1 class="app-title">Sigma Luca</h1>
     </div>
     <button class="close-btn" id="closeButton">×</button>
@@ -13,74 +11,59 @@ var dialogInnerHTML = `
   <div class="main-content">
     <div class="navigation-panel">
       <div class="nav-item">
-        <span class="nav-icon">🔗</span>
         <a href="https://wxnnvs.ftp.sh/un-seb/troubleshoot" target="_blank" class="nav-link">Troubleshoot</a>
       </div>
       <div class="nav-item">
-        <span class="nav-icon">📍</span>
         <a onclick="showurl()" class="nav-link">Show Current URL</a>
       </div>
     </div>
-
     <div class="url-section">
       <div class="input-container">
-        <span class="input-icon">🌐</span>
         <input type='text' id='urlInput' placeholder='Enter destination URL...' class="url-input">
         <button id='openUrlButton' class="primary-btn">Launch</button>
       </div>
     </div>
-
     <div class="quick-actions">
       <h3 class="section-title">Quick Access</h3>
       <div class="action-grid">
         <button id='googleButton' class="action-card google-card">
-          <div class="card-icon">🔍</div>
           <span class="card-label">Google</span>
         </button>
         <button id='chatgptButton' class="action-card chatgpt-card">
-          <div class="card-icon">🤖</div>
           <span class="card-label">ChatGPT</span>
         </button>
       </div>
     </div>
-
     <div class="system-controls">
       <h3 class="section-title">System</h3>
       <div class="control-row">
         <button id='exitSEB' class="danger-btn">
-          <span class="btn-icon">💥</span>
           Crash SEB
         </button>
       </div>
     </div>
-
     <div class="advanced-section">
       <div class="collapsible-section">
         <details class="custom-details">
           <summary class="section-header">
-            <span class="section-icon">🛠️</span>
             Developer Tools
             <span class="expand-icon">▼</span>
           </summary>
           <div class="section-body">
             <button id='devButton' onclick='devTools()' class="tool-btn">
-              <span class="btn-icon">🔧</span>
               Open DevTools
             </button>
           </div>
         </details>
       </div>
-
       <div class="collapsible-section">
         <details class="custom-details">
           <summary class="section-header">
-            <span class="section-icon">⚗️</span>
             Experimental Features
             <span class="expand-icon">▼</span>
           </summary>
           <div class="section-body">
             <button id='screenshotButton' onclick='screenshot()' class="experimental-btn">
-              <span class="btn-icon">📄</span>
               Save as PDF
               <span class="beta-badge">BETA</span>
             </button>
