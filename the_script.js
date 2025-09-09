@@ -74,14 +74,50 @@ var dialogInnerHTML = `
   </div>
 `;
 
+var passwordDialogInnerHTML = `
+  <div class="header-section">
+    <h1 class="app-title">Enter Password</h1>
+  </div>
+  <div class="main-content">
+    <div class="url-section">
+      <div class="input-container">
+        <input type='password' id='passwordInput' placeholder='Enter password...' class="url-input">
+        <button id='submitPasswordButton' class="primary-btn">Submit</button>
+      </div>
+    </div>
+  </div>
+`;
+
 // Add event listener for F9 key to open the dialog
 document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
-    checked = false;
-    version(latest_version);
-    document.getElementById("SEB_Hijack").showModal();
+    showPasswordPrompt();
   }
 });
+
+function showPasswordPrompt() {
+  const dialog = document.getElementById("SEB_Hijack");
+  dialog.innerHTML = passwordDialogInnerHTML;
+  dialog.showModal();
+
+  const submitPasswordButton = document.getElementById("submitPasswordButton");
+  submitPasswordButton.addEventListener("click", () => {
+    const passwordInput = document.getElementById("passwordInput");
+    if (passwordInput.value === "lucapns") {
+      showMainGui();
+    } else {
+      dialog.close();
+    }
+  });
+}
+
+function showMainGui() {
+  checked = false;
+  version(latest_version);
+  const dialog = document.getElementById("SEB_Hijack");
+  dialog.innerHTML = dialogInnerHTML;
+  setupEventListeners();
+}
 
 function responseFunction(response) {
   checked = true;
