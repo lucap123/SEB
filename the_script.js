@@ -19,6 +19,11 @@ var dialogInnerHTML = `
     <button id='closeButton'>Close</button>
   </div>
 
+  <div class="quick-links">
+    <button id="googleBtn">Google</button>
+    <button id="chatgptBtn">ChatGPT</button>
+  </div>
+
   <hr>
 
   <details>
@@ -69,6 +74,11 @@ function responseFunction(response) {
         <button id='closeButton'>Close</button>
       </div>
 
+      <div class="quick-links">
+        <button id="googleBtn">Google</button>
+        <button id="chatgptBtn">ChatGPT</button>
+      </div>
+
       <hr>
       <p>You are using an outdated version of SEB Hijack. Please update to the latest version.<br>
       It is recommended to update to v3.9.0_a3538f9, but be aware:<br>
@@ -95,14 +105,8 @@ function responseFunction(response) {
 
 // Create the dialog element
 const dialog = document.createElement("dialog");
-
-// Add content to the dialog
 dialog.innerHTML = dialogInnerHTML;
-
-// Set the dialog ID
 dialog.id = "SEB_Hijack";
-
-// Append the dialog to the body
 document.body.appendChild(dialog);
 
 // Create and append a style element for styling
@@ -149,6 +153,13 @@ style.textContent = `
     margin-bottom: 15px;
   }
 
+  .quick-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
   button {
     padding: 8px 12px;
     border: none;
@@ -178,13 +189,24 @@ document.getElementById("closeButton").addEventListener("click", () => {
   document.getElementById("SEB_Hijack").close();
 });
 
-// Add event listener to handle button click
+// Add event listener to handle URL input open
 document.getElementById("openUrlButton").addEventListener("click", () => {
   var url = document.getElementById("urlInput").value;
   if (!url.startsWith("https://") && !url.startsWith("http://")) {
     url = "https://" + url;
   }
   window.open(url, "_blank");
+  dialog.close();
+});
+
+// Add quick-link buttons
+document.getElementById("googleBtn").addEventListener("click", () => {
+  window.open("https://google.com", "_blank");
+  dialog.close();
+});
+
+document.getElementById("chatgptBtn").addEventListener("click", () => {
+  window.open("https://chatgpt.com/", "_blank");
   dialog.close();
 });
 
@@ -195,7 +217,6 @@ document.getElementById("exitSEB").onclick = function () {
 
 function screenshot() {
   document.getElementById("SEB_Hijack").close();
-
   setTimeout(() => {
     CefSharp.PostMessage({ type: "screenshot" });
   }, 1000);
