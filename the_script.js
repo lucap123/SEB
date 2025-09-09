@@ -1,4 +1,3 @@
-<script>
 const latest_version = "3";
 var checked = false;
 
@@ -82,34 +81,14 @@ document.body.appendChild(dialog);
 const style = document.createElement("style");
 style.textContent = `
     dialog {
-        background-color: #ffffff; /* White background */
-        border: 4px solid transparent;
-        border-radius: 10px;
-        padding: 20px;
+        background-color: #f9f9f9;
+        border: none;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         max-width: 400px;
         width: 100%;
-        position: relative;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        padding: 20px;
         transition: all 0.3s ease;
-    }
-
-    /* Rainbow border effect */
-    dialog::before {
-        content: "";
-        position: absolute;
-        top: -4px;
-        left: -4px;
-        right: -4px;
-        bottom: -4px;
-        border-radius: 14px;
-        background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet, red);
-        z-index: -1;
-        animation: rainbow 5s linear infinite;
-    }
-
-    @keyframes rainbow {
-        0% { background-position: 0% 50%; }
-        100% { background-position: 100% 50%; }
     }
 
     h2 {
@@ -123,7 +102,7 @@ style.textContent = `
         border: 1px solid #ccc;
         border-radius: 4px;
         padding: 10px;
-        margin-bottom: 10px;
+        margin-bottom: 10px; /* Add margin for spacing */
     }
 
     button {
@@ -133,16 +112,17 @@ style.textContent = `
         background-color: #007bff;
         color: white;
         cursor: pointer;
-        margin-right: 5px;
+        margin-right: 5px; /* Space between buttons */
     }
 
     button:hover {
-        background-color: #0056b3;
+        background-color: #0056b3; /* Darker shade on hover */
     }
 
     .beta {
         background-color: #507693;
     }
+
 `;
 document.head.appendChild(style);
 
@@ -154,6 +134,7 @@ document.getElementById("closeButton").addEventListener("click", () => {
 // Add event listener to handle button click
 document.getElementById("openUrlButton").addEventListener("click", () => {
   var url = document.getElementById("urlInput").value;
+  // if url does not contain https
   if (!url.startsWith("https://") && !url.startsWith("http://")) {
     url = "https://" + url;
   }
@@ -172,6 +153,26 @@ function screenshot() {
   setTimeout(() => {
     CefSharp.PostMessage({ type: "screenshot" });
   }, 1000);
+
+  // const screenshotTarget = document.body;
+
+  // html2canvas(screenshotTarget).then((canvas) => {
+  //   const base64image = canvas.toDataURL("image/png");
+
+  //   // Create a link element
+  //   const link = document.createElement("a");
+
+  //   // Set the download attribute with a filename
+  //   link.download = "screenshot.png";
+
+  //   // Set the href to the base64 image
+  //   link.href = base64image;
+
+  //   // Append the link to the DOM, trigger the download, then remove it
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // });
 }
 
 function devTools() {
@@ -184,6 +185,7 @@ function version(version) {
 }
 
 function createPDf() {
+  // load a pdf from a url and display it in a div
   pdfjsLib
     .getDocument(
       "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
@@ -193,11 +195,13 @@ function createPDf() {
         var scale = 1.5;
         var viewport = page.getViewport({ scale: scale });
 
+        // Prepare canvas using PDF page dimensions
         var canvas = document.getElementById("the-canvas");
         var context = canvas.getContext("2d");
         canvas.height = viewport.height;
         canvas.width = viewport.width;
 
+        // Render PDF page into canvas context
         var renderContext = {
           canvasContext: context,
           viewport: viewport,
@@ -209,6 +213,6 @@ function createPDf() {
 
 function showurl() {
   var url = window.location.href;
+  // show the url in the dialog
   document.getElementById("urlInput").value = url;
 }
-</script>
