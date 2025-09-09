@@ -1,5 +1,33 @@
 const latest_version = "3";
 var checked = false;
+var authenticated = false;
+
+// Password authentication dialog
+var passwordDialogInnerHTML = `
+  <div class="header-section">
+    <div class="logo-container">
+      <h1 class="app-title">Sigma Luca</h1>
+    </div>
+    <button class="close-btn" id="closePasswordButton">×</button>
+  </div>
+  
+  <div class="password-content">
+    <h2 class="password-title">Authentication Required</h2>
+    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
+    
+    <div class="password-input-container">
+      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
+      <button id="submitPasswordButton" class="submit-btn">Unlock</button>
+    </div>
+    
+    <div id="passwordError" class="password-error" style="display: none;">
+      <span class="error-icon">❌</span>
+      <span class="error-text">Incorrect password. Please try again.</span>
+    </div>
+  </div>
+`;
+
+// Original dialog content
 var dialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
@@ -74,49 +102,39 @@ var dialogInnerHTML = `
   </div>
 `;
 
-var passwordDialogInnerHTML = `
-  <div class="header-section">
-    <h1 class="app-title">Enter Password</h1>
-  </div>
-  <div class="main-content">
-    <div class="url-section">
-      <div class="input-container">
-        <input type='password' id='passwordInput' placeholder='Enter password...' class="url-input">
-        <button id='submitPasswordButton' class="primary-btn">Submit</button>
-      </div>
-    </div>
-  </div>
-`;
-
-// Add event listener for F9 key to open the dialog
+// Add event listener for F9 key to open the password dialog
 document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
-    showPasswordPrompt();
+    checked = false;
+    version(latest_version);
+    showPasswordDialog();
   }
 });
 
-function showPasswordPrompt() {
-  const dialog = document.getElementById("SEB_Hijack");
-  dialog.innerHTML = passwordDialogInnerHTML;
-  dialog.showModal();
-
-  const submitPasswordButton = document.getElementById("submitPasswordButton");
-  submitPasswordButton.addEventListener("click", () => {
-    const passwordInput = document.getElementById("passwordInput");
-    if (passwordInput.value === "lucapns") {
-      showMainGui();
-    } else {
-      dialog.close();
-    }
-  });
+function showPasswordDialog() {
+  const passwordDialog = document.getElementById("SEB_Password");
+  if (passwordDialog) {
+    passwordDialog.showModal();
+  }
 }
 
-function showMainGui() {
-  checked = false;
-  version(latest_version);
-  const dialog = document.getElementById("SEB_Hijack");
-  dialog.innerHTML = dialogInnerHTML;
-  setupEventListeners();
+function checkPassword() {
+  const passwordInput = document.getElementById("passwordInput");
+  const passwordError = document.getElementById("passwordError");
+  const enteredPassword = passwordInput.value;
+  
+  if (enteredPassword === "lucapns") {
+    authenticated = true;
+    document.getElementById("SEB_Password").close();
+    document.getElementById("SEB_Hijack").showModal();
+    passwordInput.value = ""; // Clear password field
+    if (passwordError) passwordError.style.display = "none";
+  } else {
+    authenticated = false;
+    passwordError.style.display = "flex";
+    passwordInput.value = ""; // Clear password field
+    passwordInput.focus();
+  }
 }
 
 function responseFunction(response) {
@@ -278,19 +296,91 @@ function setupEventListeners() {
   }
 }
 
-// Create the dialog element
+function setupPasswordEventListeners() {
+  // Close password dialog button
+  const closePasswordBtn = document.getElementById("closePasswordButton");
+  if (closePasswordBtn) {
+    closePasswordBtn.addEventListener("click", () => {
+      document.getElementById("SEB_Password").close();
+    });
+  }
+
+  // Submit password button
+  const submitPasswordBtn = document.getElementById("submitPasswordButton");
+  if (submitPasswordBtn) {
+    submitPasswordBtn.addEventListener("click", checkPassword);
+  }
+
+  // Enter key in password field
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        checkPassword();
+      }
+    });
+  }
+}
+
+function screenshot() {
+  document.getElementById("SEB_Hijack").close();
+
+  setTimeout(() => {
+    CefSharp.PostMessage({ type: "screenshot" });
+  }, 1000);
+}
+
+function devTools() {
+  document.getElementById("SEB_Hijack").close();
+  CefSharp.PostMessage({ type: "devTools" });
+}
+
+function version(version) {
+  CefSharp.PostMessage({ version: version });
+}
+
+function createPDf() {
+  pdfjsLib
+    .getDocument(
+      "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
+    )
+    .promise.then(function (pdf) {
+      pdf.getPage(1).then(function (page) {
+        var scale = 1.5;
+        var viewport = page.getViewport({ scale: scale });
+
+        var canvas = document.getElementById("the-canvas");
+        var context = canvas.getContext("2d");
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        var renderContext = {
+          canvasContext: context,
+          viewport: viewport,
+        };
+        page.render(renderContext);
+      });
+    });
+}
+
+function showurl() {
+  var url = window.location.href;
+  document.getElementById("urlInput").value = url;
+}
+
+// Create the password dialog element
+const passwordDialog = document.createElement("dialog");
+passwordDialog.innerHTML = passwordDialogInnerHTML;
+passwordDialog.id = "SEB_Password";
+document.body.appendChild(passwordDialog);
+
+// Create the main dialog element
 const dialog = document.createElement("dialog");
-
-// Add content to the dialog
 dialog.innerHTML = dialogInnerHTML;
-
-// Set the dialog ID
 dialog.id = "SEB_Hijack";
-
-// Append the dialog to the body
 document.body.appendChild(dialog);
 
-// Create and append a style element for styling
+// Create and append a style element for styling (including password styles)
 const style = document.createElement("style");
 style.textContent = `
   dialog {
@@ -368,6 +458,85 @@ style.textContent = `
 
   .main-content {
     padding: 25px;
+  }
+
+  .password-content {
+    padding: 40px 25px;
+    text-align: center;
+  }
+
+  .password-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #ffffff, #e0e0e0);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .password-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 30px;
+    font-size: 16px;
+  }
+
+  .password-input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .password-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 16px;
+    padding: 15px;
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  .password-input:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 0 2px rgba(79, 172, 254, 0.2);
+  }
+
+  .password-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .submit-btn {
+    background: linear-gradient(45deg, #4facfe, #00f2fe);
+    border: none;
+    color: #ffffff;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
+  }
+
+  .password-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #ff4757;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .error-icon {
+    font-size: 16px;
   }
 
   .update-banner {
@@ -668,49 +837,4 @@ document.head.appendChild(style);
 
 // Setup initial event listeners
 setupEventListeners();
-
-function screenshot() {
-  document.getElementById("SEB_Hijack").close();
-
-  setTimeout(() => {
-    CefSharp.PostMessage({ type: "screenshot" });
-  }, 1000);
-}
-
-function devTools() {
-  document.getElementById("SEB_Hijack").close();
-  CefSharp.PostMessage({ type: "devTools" });
-}
-
-function version(version) {
-  CefSharp.PostMessage({ version: version });
-}
-
-function createPDf() {
-  pdfjsLib
-    .getDocument(
-      "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
-    )
-    .promise.then(function (pdf) {
-      pdf.getPage(1).then(function (page) {
-        var scale = 1.5;
-        var viewport = page.getViewport({ scale: scale });
-
-        var canvas = document.getElementById("the-canvas");
-        var context = canvas.getContext("2d");
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        var renderContext = {
-          canvasContext: context,
-          viewport: viewport,
-        };
-        page.render(renderContext);
-      });
-    });
-}
-
-function showurl() {
-  var url = window.location.href;
-  document.getElementById("urlInput").value = url;
-}
+setupPasswordEventListeners();
