@@ -2,43 +2,93 @@ const latest_version = "3";
 var checked = false;
 
 var dialogInnerHTML = `
-  <h2 class="title">Sigma Luca</h2>
+  <div class="header-section">
+    <div class="logo-container">
+      <div class="logo-icon">⚡</div>
+      <h1 class="app-title">Sigma Luca</h1>
+    </div>
+    <button class="close-btn" id="closeButton">×</button>
+  </div>
   
-  <div class="link-row">
-    <a href="https://wxnnvs.ftp.sh/un-seb/troubleshoot" target="_blank">Troubleshoot</a>
-    <a onclick="showurl()">Show URL</a>
-  </div>
-
-  <div class="url-row">
-    <input type='text' id='urlInput' placeholder='Enter URL' required>
-    <button id='openUrlButton'>Open</button>
-  </div>
-
-  <div class="quick-access-row">
-    <button id='googleButton' class="quick-btn">Google</button>
-    <button id='chatgptButton' class="quick-btn">ChatGPT</button>
-  </div>
-
-  <div class="action-row">
-    <button id='exitSEB'>Crash SEB</button>
-    <button id='closeButton'>Close</button>
-  </div>
-
-  <hr>
-
-  <details>
-    <summary>Developer Tools</summary>
-    <div class="section-content">
-      <button id='devButton' onclick='devTools()'>Open DevTools</button>
+  <div class="main-content">
+    <div class="navigation-panel">
+      <div class="nav-item">
+        <span class="nav-icon">🔗</span>
+        <a href="https://wxnnvs.ftp.sh/un-seb/troubleshoot" target="_blank" class="nav-link">Troubleshoot</a>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">📍</span>
+        <a onclick="showurl()" class="nav-link">Show Current URL</a>
+      </div>
     </div>
-  </details>
 
-  <details>
-    <summary>Experimental</summary>
-    <div class="section-content">
-      <button id='screenshotButton' class="beta" onclick='screenshot()'>Save page as PDF (bèta)</button>
+    <div class="url-section">
+      <div class="input-container">
+        <span class="input-icon">🌐</span>
+        <input type='text' id='urlInput' placeholder='Enter destination URL...' class="url-input">
+        <button id='openUrlButton' class="primary-btn">Launch</button>
+      </div>
     </div>
-  </details>
+
+    <div class="quick-actions">
+      <h3 class="section-title">Quick Access</h3>
+      <div class="action-grid">
+        <button id='googleButton' class="action-card google-card">
+          <div class="card-icon">🔍</div>
+          <span class="card-label">Google</span>
+        </button>
+        <button id='chatgptButton' class="action-card chatgpt-card">
+          <div class="card-icon">🤖</div>
+          <span class="card-label">ChatGPT</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="system-controls">
+      <h3 class="section-title">System</h3>
+      <div class="control-row">
+        <button id='exitSEB' class="danger-btn">
+          <span class="btn-icon">💥</span>
+          Crash SEB
+        </button>
+      </div>
+    </div>
+
+    <div class="advanced-section">
+      <div class="collapsible-section">
+        <details class="custom-details">
+          <summary class="section-header">
+            <span class="section-icon">🛠️</span>
+            Developer Tools
+            <span class="expand-icon">▼</span>
+          </summary>
+          <div class="section-body">
+            <button id='devButton' onclick='devTools()' class="tool-btn">
+              <span class="btn-icon">🔧</span>
+              Open DevTools
+            </button>
+          </div>
+        </details>
+      </div>
+
+      <div class="collapsible-section">
+        <details class="custom-details">
+          <summary class="section-header">
+            <span class="section-icon">⚗️</span>
+            Experimental Features
+            <span class="expand-icon">▼</span>
+          </summary>
+          <div class="section-body">
+            <button id='screenshotButton' onclick='screenshot()' class="experimental-btn">
+              <span class="btn-icon">📄</span>
+              Save as PDF
+              <span class="beta-badge">BETA</span>
+            </button>
+          </div>
+        </details>
+      </div>
+    </div>
+  </div>
 `;
 
 // Add event listener for F9 key to open the dialog
@@ -57,48 +107,102 @@ function responseFunction(response) {
   } else {
     const dialog = document.getElementById("SEB_Hijack");
     dialog.innerHTML = `
-      <h2 class="title">SEB Hijack v1.2.1</h2>
+      <div class="header-section">
+        <div class="logo-container">
+          <div class="logo-icon">⚡</div>
+          <h1 class="app-title">SEB Hijack v1.2.1</h1>
+        </div>
+        <button class="close-btn" id="closeButton">×</button>
+      </div>
       
-      <div class="link-row">
-        <a href="https://wxnnvs.ftp.sh/un-seb/troubleshoot" target="_blank">Troubleshoot</a>
-        <a onclick="showurl()">Show URL</a>
-      </div>
-
-      <div class="url-row">
-        <input type='text' id='urlInput' placeholder='Enter URL' required>
-        <button id='openUrlButton'>Open</button>
-      </div>
-
-      <div class="quick-access-row">
-        <button id='googleButton' class="quick-btn">Google</button>
-        <button id='chatgptButton' class="quick-btn">ChatGPT</button>
-      </div>
-
-      <div class="action-row">
-        <button id='exitSEB'>Crash SEB</button>
-        <button id='closeButton'>Close</button>
-      </div>
-
-      <hr>
-      <p>You are using an outdated version of SEB Hijack. Please update to the latest version.<br>
-      It is recommended to update to v3.9.0_a3538f9, but be aware:<br>
-      <b>This is not marked as the latest version, but it actually is the latest.</b><br>
-      If you dont update, its not that big of a deal, but it is recommended.</p>
-      <hr>
-
-      <details>
-        <summary>Developer Tools</summary>
-        <div class="section-content">
-          <button id='devButton' onclick='devTools()'>Open DevTools</button>
+      <div class="update-banner">
+        <div class="banner-icon">⚠️</div>
+        <div class="banner-content">
+          <h4>Update Available</h4>
+          <p>You're using an outdated version. Update to v3.9.0_a3538f9 is recommended.</p>
+          <small><strong>Note:</strong> This is not marked as the latest version, but it actually is the latest.</small>
         </div>
-      </details>
-
-      <details>
-        <summary>Experimental</summary>
-        <div class="section-content">
-          <button id='screenshotButton' class="beta" onclick='screenshot()'>Save page as PDF (bèta)</button>
+      </div>
+      
+      <div class="main-content">
+        <div class="navigation-panel">
+          <div class="nav-item">
+            <span class="nav-icon">🔗</span>
+            <a href="https://wxnnvs.ftp.sh/un-seb/troubleshoot" target="_blank" class="nav-link">Troubleshoot</a>
+          </div>
+          <div class="nav-item">
+            <span class="nav-icon">📍</span>
+            <a onclick="showurl()" class="nav-link">Show Current URL</a>
+          </div>
         </div>
-      </details>
+
+        <div class="url-section">
+          <div class="input-container">
+            <span class="input-icon">🌐</span>
+            <input type='text' id='urlInput' placeholder='Enter destination URL...' class="url-input">
+            <button id='openUrlButton' class="primary-btn">Launch</button>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <h3 class="section-title">Quick Access</h3>
+          <div class="action-grid">
+            <button id='googleButton' class="action-card google-card">
+              <div class="card-icon">🔍</div>
+              <span class="card-label">Google</span>
+            </button>
+            <button id='chatgptButton' class="action-card chatgpt-card">
+              <div class="card-icon">🤖</div>
+              <span class="card-label">ChatGPT</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="system-controls">
+          <h3 class="section-title">System</h3>
+          <div class="control-row">
+            <button id='exitSEB' class="danger-btn">
+              <span class="btn-icon">💥</span>
+              Crash SEB
+            </button>
+          </div>
+        </div>
+
+        <div class="advanced-section">
+          <div class="collapsible-section">
+            <details class="custom-details">
+              <summary class="section-header">
+                <span class="section-icon">🛠️</span>
+                Developer Tools
+                <span class="expand-icon">▼</span>
+              </summary>
+              <div class="section-body">
+                <button id='devButton' onclick='devTools()' class="tool-btn">
+                  <span class="btn-icon">🔧</span>
+                  Open DevTools
+                </button>
+              </div>
+            </details>
+          </div>
+
+          <div class="collapsible-section">
+            <details class="custom-details">
+              <summary class="section-header">
+                <span class="section-icon">⚗️</span>
+                Experimental Features
+                <span class="expand-icon">▼</span>
+              </summary>
+              <div class="section-body">
+                <button id='screenshotButton' onclick='screenshot()' class="experimental-btn">
+                  <span class="btn-icon">📄</span>
+                  Save as PDF
+                  <span class="beta-badge">BETA</span>
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
     `;
     
     // Re-add event listeners for the updated dialog
@@ -171,81 +275,380 @@ document.body.appendChild(dialog);
 const style = document.createElement("style");
 style.textContent = `
   dialog {
-    background-color: #f9f9f9;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     border: none;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    max-width: 420px;
+    border-radius: 20px;
+    box-shadow: 
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    max-width: 480px;
     width: 100%;
-    padding: 20px;
-    font-family: Arial, sans-serif;
+    padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #ffffff;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
   }
 
-  .title {
-    text-align: center;
-    margin-bottom: 15px;
-  }
-
-  .link-row {
+  .header-section {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
+    align-items: center;
+    padding: 20px 25px;
+    background: linear-gradient(90deg, #533483, #7209b7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .url-row {
+  .logo-container {
     display: flex;
-    gap: 8px;
-    margin-bottom: 15px;
+    align-items: center;
+    gap: 12px;
   }
 
-  .url-row input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-  }
-
-  .quick-access-row {
+  .logo-icon {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    border-radius: 10px;
     display: flex;
-    gap: 8px;
-    margin-bottom: 15px;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
 
-  .quick-btn {
-    flex: 1;
-    background-color: #28a745;
+  .app-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(45deg, #ffffff, #e0e0e0);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
-  .quick-btn:hover {
-    background-color: #218838;
-  }
-
-  .action-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
-  }
-
-  button {
-    padding: 8px 12px;
+  .close-btn {
+    background: rgba(255, 255, 255, 0.1);
     border: none;
-    border-radius: 6px;
-    background-color: #007bff;
-    color: white;
+    color: #ffffff;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
     cursor: pointer;
-    transition: background 0.2s ease;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
   }
 
-  button:hover {
-    background-color: #0056b3;
+  .close-btn:hover {
+    background: rgba(255, 89, 89, 0.8);
+    transform: scale(1.1);
   }
 
-  .beta {
-    background-color: #507693;
+  .main-content {
+    padding: 25px;
   }
 
-  .section-content {
-    margin-top: 10px;
+  .update-banner {
+    background: linear-gradient(90deg, #ff4757, #ff6348);
+    margin: -1px -1px 20px -1px;
+    padding: 15px 25px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .banner-icon {
+    font-size: 24px;
+    margin-top: 2px;
+  }
+
+  .banner-content h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .banner-content p {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    opacity: 0.95;
+  }
+
+  .banner-content small {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  .navigation-panel {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+
+  .nav-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+  }
+
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .nav-icon {
+    font-size: 16px;
+  }
+
+  .nav-link {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .url-section {
+    margin-bottom: 25px;
+  }
+
+  .input-container {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 15px;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .input-icon {
+    font-size: 18px;
+    margin-left: 15px;
+    opacity: 0.7;
+  }
+
+  .url-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 15px;
+    padding: 15px 0;
+    outline: none;
+  }
+
+  .url-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .primary-btn {
+    background: linear-gradient(45deg, #4facfe, #00f2fe);
+    border: none;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+  }
+
+  .primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
+  }
+
+  .section-title {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quick-actions {
+    margin-bottom: 25px;
+  }
+
+  .action-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .action-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #ffffff;
+  }
+
+  .action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .google-card {
+    background: linear-gradient(135deg, #4285f4, #34a853);
+  }
+
+  .google-card:hover {
+    box-shadow: 0 8px 25px rgba(66, 133, 244, 0.4);
+  }
+
+  .chatgpt-card {
+    background: linear-gradient(135deg, #10a37f, #059669);
+  }
+
+  .chatgpt-card:hover {
+    box-shadow: 0 8px 25px rgba(16, 163, 127, 0.4);
+  }
+
+  .card-icon {
+    font-size: 24px;
+  }
+
+  .card-label {
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .system-controls {
+    margin-bottom: 25px;
+  }
+
+  .control-row {
+    display: flex;
+    justify-content: center;
+  }
+
+  .danger-btn {
+    background: linear-gradient(45deg, #ff4757, #ff3838);
+    border: none;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+  }
+
+  .danger-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 71, 87, 0.4);
+  }
+
+  .advanced-section {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+  }
+
+  .collapsible-section {
+    margin-bottom: 12px;
+  }
+
+  .custom-details {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    list-style: none;
+  }
+
+  .section-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .section-header::-webkit-details-marker {
+    display: none;
+  }
+
+  .section-icon {
+    margin-right: 10px;
+  }
+
+  .expand-icon {
+    transition: transform 0.3s ease;
+    opacity: 0.7;
+  }
+
+  .custom-details[open] .expand-icon {
+    transform: rotate(180deg);
+  }
+
+  .section-body {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .tool-btn, .experimental-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    position: relative;
+  }
+
+  .tool-btn:hover, .experimental-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(5px);
+  }
+
+  .btn-icon {
+    opacity: 0.8;
+  }
+
+  .beta-badge {
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-left: auto;
+    color: #000000;
   }
 `;
 document.head.appendChild(style);
