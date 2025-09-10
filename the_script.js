@@ -65,7 +65,7 @@ var dialogInnerHTML = `
         <button id='exitSEB' class="danger-btn">
           Crash SEB
         </button>
-        <span id="machineIdDisplay" style="font-size:12px;opacity:0.8;">
+        <span id="machineIdDisplay" style="font-size:12px;opacity:0.8; margin-left: 15px;">
           Machine ID: (loading…)
         </span>
       </div>
@@ -86,6 +86,8 @@ function showPasswordDialog() {
   const passwordDialog = document.getElementById("SEB_Password");
   if (passwordDialog) {
     passwordDialog.showModal();
+    // Focus the input field when the dialog opens
+    setTimeout(() => document.getElementById("passwordInput").focus(), 100);
   }
 }
 
@@ -119,6 +121,7 @@ function responseFunction(response) {
     // do nothing
   } else {
     const dialog = document.getElementById("SEB_Hijack");
+    // This HTML now includes the machineIdDisplay span
     dialog.innerHTML = `
       <div class="header-section">
         <div class="logo-container">
@@ -174,14 +177,25 @@ function responseFunction(response) {
               <span class="btn-icon">💥</span>
               Crash SEB
             </button>
+            <span id="machineIdDisplay" style="font-size:12px;opacity:0.8; margin-left: 15px;">
+              Machine ID: (loading…)
+            </span>
           </div>
         </div>
       </div>
     `;
     
-    // Re-add event listeners for the updated dialog
-    setupEventListeners();
+    // Re-initialize the dialog after updating its content
+    initializeMainDialog();
   }
+}
+
+// *** NEW FUNCTION ***
+// This function sets up listeners and requests the machine key.
+// It should be called whenever the main dialog's content is set.
+function initializeMainDialog() {
+  setupEventListeners();
+  CefSharp.PostMessage({ type: "getMachineKey" });
 }
 
 function setupEventListeners() {
@@ -646,6 +660,7 @@ style.textContent = `
   .control-row {
     display: flex;
     justify-content: center;
+    align-items: center;
   }
 
   .danger-btn {
@@ -670,8 +685,7 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Setup initial event listeners
-setupEventListeners();
+// Setup event listeners for password dialog
 setupPasswordEventListeners();
-CefSharp.PostMessage({ type: "getMachineKey" });
-
+// Initialize the main dialog (setup listeners and get machine key)
+initializeMainDialog();
