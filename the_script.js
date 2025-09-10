@@ -70,6 +70,35 @@ var dialogInnerHTML = `
         </button>
       </div>
     </div>
+    <div class="advanced-section">
+      <div class="collapsible-section">
+        <details class="custom-details">
+          <summary class="section-header">
+            Developer Tools
+            <span class="expand-icon">▼</span>
+          </summary>
+          <div class="section-body">
+            <button id='devButton' onclick='devTools()' class="tool-btn">
+              Open DevTools
+            </button>
+          </div>
+        </details>
+      </div>
+      <div class="collapsible-section">
+        <details class="custom-details">
+          <summary class="section-header">
+            Experimental Features
+            <span class="expand-icon">▼</span>
+          </summary>
+          <div class="section-body">
+            <button id='screenshotButton' onclick='screenshot()' class="experimental-btn">
+              Save as PDF
+              <span class="beta-badge">BETA</span>
+            </button>
+          </div>
+        </details>
+      </div>
+    </div>
   </div>
 `;
 
@@ -173,6 +202,41 @@ function responseFunction(response) {
               <span class="btn-icon">💥</span>
               Crash SEB
             </button>
+          </div>
+        </div>
+
+        <div class="advanced-section">
+          <div class="collapsible-section">
+            <details class="custom-details">
+              <summary class="section-header">
+                <span class="section-icon">🛠️</span>
+                Developer Tools
+                <span class="expand-icon">▼</span>
+              </summary>
+              <div class="section-body">
+                <button id='devButton' onclick='devTools()' class="tool-btn">
+                  <span class="btn-icon">🔧</span>
+                  Open DevTools
+                </button>
+              </div>
+            </details>
+          </div>
+
+          <div class="collapsible-section">
+            <details class="custom-details">
+              <summary class="section-header">
+                <span class="section-icon">⚗️</span>
+                Experimental Features
+                <span class="expand-icon">▼</span>
+              </summary>
+              <div class="section-body">
+                <button id='screenshotButton' onclick='screenshot()' class="experimental-btn">
+                  <span class="btn-icon">📄</span>
+                  Save as PDF
+                  <span class="beta-badge">BETA</span>
+                </button>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -678,6 +742,95 @@ style.textContent = `
   .danger-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(255, 71, 87, 0.4);
+  }
+
+  .advanced-section {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+  }
+
+  .collapsible-section {
+    margin-bottom: 12px;
+  }
+
+  .custom-details {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 15px 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    list-style: none;
+  }
+
+  .section-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .section-header::-webkit-details-marker {
+    display: none;
+  }
+
+  .section-icon {
+    margin-right: 10px;
+  }
+
+  .expand-icon {
+    transition: transform 0.3s ease;
+    opacity: 0.7;
+  }
+
+  .custom-details[open] .expand-icon {
+    transform: rotate(180deg);
+  }
+
+  .section-body {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .tool-btn, .experimental-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    position: relative;
+  }
+
+  .tool-btn:hover, .experimental-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateX(5px);
+  }
+
+  .btn-icon {
+    opacity: 0.8;
+  }
+
+  .beta-badge {
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    margin-left: auto;
+    color: #000000;
   }
 `;
 document.head.appendChild(style);
