@@ -113,9 +113,19 @@ function checkPassword() {
 
 function responseFunction(response) {
   checked = true;
-  if (response == true) {
-    // do nothing
+
+  // If response is the machine key, show it immediately
+  if (response !== true && response !== false) {
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl) idEl.textContent = "Machine ID: " + response;
+    return;
+  }
+
+  if (response === true) {
+    // up-to-date, do nothing special
+    return;
   } else {
+    // Outdated dialog
     const dialog = document.getElementById("SEB_Hijack");
     dialog.innerHTML = `
       <div class="header-section">
@@ -172,15 +182,25 @@ function responseFunction(response) {
               <span class="btn-icon">💥</span>
               Crash SEB
             </button>
+            <span id="machineIdDisplay" class="machine-id">Machine ID: loading...</span>
           </div>
         </div>
       </div>
     `;
     
-    // Re-add event listeners for the updated dialog
+    // Re-add event listeners
     setupEventListeners();
+
+    // Set machine ID after dialog is rendered
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl && typeof responseFunction.machineKey !== "undefined") {
+      idEl.textContent = "Machine ID: " + responseFunction.machineKey;
+    }
   }
 }
+responseFunction.storeMachineKey = function(key) {
+  responseFunction.machineKey = key;
+};
 function handleMachineKey(response) {
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + response;
