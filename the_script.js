@@ -65,9 +65,12 @@ var dialogInnerHTML = `
         <button id='exitSEB' class="danger-btn">
           Crash SEB
         </button>
+      </div>
+      <div class="machine-key-section">
         <span id="machineIdDisplay" class="machine-id">Machine ID: loading...</span>
       </div>
     </div>
+
   </div>
 `;
 
