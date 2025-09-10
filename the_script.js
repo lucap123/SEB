@@ -65,9 +65,7 @@ var dialogInnerHTML = `
         <button id='exitSEB' class="danger-btn">
           Crash SEB
         </button>
-        <span id="machineIdDisplay" style="font-size:12px;opacity:0.8; margin-left: 15px;">
-          Machine ID: (loading…)
-        </span>
+        <span id="machineIdDisplay" class="machine-id">Machine ID: loading...</span>
       </div>
     </div>
   </div>
@@ -86,8 +84,6 @@ function showPasswordDialog() {
   const passwordDialog = document.getElementById("SEB_Password");
   if (passwordDialog) {
     passwordDialog.showModal();
-    // Focus the input field when the dialog opens
-    setTimeout(() => document.getElementById("passwordInput").focus(), 100);
   }
 }
 
@@ -100,6 +96,8 @@ function checkPassword() {
     authenticated = true;
     document.getElementById("SEB_Password").close();
     document.getElementById("SEB_Hijack").showModal();
+    CefSharp.PostMessage({ type: "getMachineKey" });
+
     passwordInput.value = ""; // Clear password field
     if (passwordError) passwordError.style.display = "none";
   } else {
@@ -112,16 +110,10 @@ function checkPassword() {
 
 function responseFunction(response) {
   checked = true;
-  if (typeof response === "string" && /^[0-9a-f]{64}$/.test(response)) {
-    const idEl = document.getElementById("machineIdDisplay");
-    if (idEl) idEl.textContent = "Machine ID: " + response;
-    return; // stop here so we don’t overwrite UI
-  }
   if (response == true) {
     // do nothing
   } else {
     const dialog = document.getElementById("SEB_Hijack");
-    // This HTML now includes the machineIdDisplay span
     dialog.innerHTML = `
       <div class="header-section">
         <div class="logo-container">
@@ -177,27 +169,19 @@ function responseFunction(response) {
               <span class="btn-icon">💥</span>
               Crash SEB
             </button>
-            <span id="machineIdDisplay" style="font-size:12px;opacity:0.8; margin-left: 15px;">
-              Machine ID: (loading…)
-            </span>
           </div>
         </div>
       </div>
     `;
     
-    // Re-initialize the dialog after updating its content
-    initializeMainDialog();
+    // Re-add event listeners for the updated dialog
+    setupEventListeners();
   }
 }
-
-// *** NEW FUNCTION ***
-// This function sets up listeners and requests the machine key.
-// It should be called whenever the main dialog's content is set.
-function initializeMainDialog() {
-  setupEventListeners();
-  CefSharp.PostMessage({ type: "getMachineKey" });
+function handleMachineKey(response) {
+  const idEl = document.getElementById("machineIdDisplay");
+  if (idEl) idEl.textContent = "Machine ID: " + response;
 }
-
 function setupEventListeners() {
   // Close button
   const closeBtn = document.getElementById("closeButton");
@@ -411,6 +395,13 @@ style.textContent = `
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+  .machine-id {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 10px;
+    display: block;
+    text-align: center;
   }
 
   .password-subtitle {
@@ -660,7 +651,6 @@ style.textContent = `
   .control-row {
     display: flex;
     justify-content: center;
-    align-items: center;
   }
 
   .danger-btn {
@@ -685,7 +675,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Setup event listeners for password dialog
+// Setup initial event listeners
+setupEventListeners();
 setupPasswordEventListeners();
-// Initialize the main dialog (setup listeners and get machine key)
-initializeMainDialog();
