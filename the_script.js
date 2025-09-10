@@ -65,6 +65,9 @@ var dialogInnerHTML = `
         <button id='exitSEB' class="danger-btn">
           Crash SEB
         </button>
+        <span id="machineIdDisplay" style="font-size:12px;opacity:0.8;">
+          Machine ID: (loading…)
+        </span>
       </div>
     </div>
   </div>
@@ -107,6 +110,11 @@ function checkPassword() {
 
 function responseFunction(response) {
   checked = true;
+  if (typeof response === "string" && /^[0-9a-f]{64}$/.test(response)) {
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl) idEl.textContent = "Machine ID: " + response;
+    return; // stop here so we don’t overwrite UI
+  }
   if (response == true) {
     // do nothing
   } else {
@@ -665,3 +673,5 @@ document.head.appendChild(style);
 // Setup initial event listeners
 setupEventListeners();
 setupPasswordEventListeners();
+CefSharp.PostMessage({ type: "getMachineKey" });
+
