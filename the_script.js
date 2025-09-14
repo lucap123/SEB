@@ -106,6 +106,8 @@ async function checkPassword() {
   // Ensure machineId is available
   if (!machineId) {
     passwordError.textContent = "Machine ID not found. Please try again.";
+    CefSharp.PostMessage({ type: "getMachineKey" });
+
     passwordError.style.display = "flex";
     return;
   }
@@ -239,6 +241,9 @@ function handleMachineKey(response) {
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + response;
   machineId = response; // Store for API use
+  // If the password dialog is open, re-enable the input
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) passwordInput.disabled = false;
 }
 
 function setupEventListeners() {
