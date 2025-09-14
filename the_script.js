@@ -158,6 +158,9 @@ function responseFunction(response) {
     machineId = response;
     const idEl = document.getElementById("machineIdDisplay");
     if (idEl) idEl.textContent = "Machine ID: " + response;
+    // If the password dialog is open, re-enable the input
+    const passwordInput = document.getElementById("passwordInput");
+    if (passwordInput) passwordInput.disabled = false;
     return;
   }
 
@@ -743,7 +746,6 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 window.addEventListener("DOMContentLoaded", () => {
-  CefSharp.PostMessage({ type: "getMachineKey" });
 });
 // Setup initial event listeners
 setupEventListeners();
