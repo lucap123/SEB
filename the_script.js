@@ -2,7 +2,10 @@ const latest_version = "3";
 var checked = false;
 var authenticated = false;
 
-// Password authentication dialog
+// Configuration
+const API_ENDPOINT = "https://68c676d90016b02b3ad8.fra.appwrite.run/";
+
+// Password authentication dialog (now for license key)
 var passwordDialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
@@ -12,17 +15,22 @@ var passwordDialogInnerHTML = `
   </div>
   
   <div class="password-content">
-    <h2 class="password-title">Authentication Required</h2>
-    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
+    <h2 class="password-title">License Activation Required</h2>
+    <p class="password-subtitle">Please enter your license key to activate Sigma Luca</p>
     
     <div class="password-input-container">
-      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
-      <button id="submitPasswordButton" class="submit-btn">Unlock</button>
+      <input type="text" id="passwordInput" placeholder="Enter license key..." class="password-input">
+      <button id="submitPasswordButton" class="submit-btn">Activate</button>
     </div>
     
     <div id="passwordError" class="password-error" style="display: none;">
       <span class="error-icon">❌</span>
-      <span class="error-text">Incorrect password. Please try again.</span>
+      <span class="error-text" id="errorText">Failed to activate. Please try again.</span>
+    </div>
+    
+    <div id="passwordLoading" class="password-loading" style="display: none;">
+      <span class="loading-icon">⏳</span>
+      <span class="loading-text">Activating...</span>
     </div>
   </div>
 `;
@@ -74,39 +82,180 @@ var dialogInnerHTML = `
   </div>
 `;
 
-// Add event listener for F9 key to open the password dialog
+// Generate machine ID (browser-based implementation)
+function generateMachineId() {
+  // Get browser fingerprint components
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.textBaseline = 'top';
+  ctx.font = '14px Arial';
+  ctx.fillText('Browser fingerprint', 2, 2);
+  
+  const canvasFingerprint = canvas.toDataURL();
+  const screenInfo = `${screen.width}x${screen.height}x${screen.colorDepth}`;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const language = navigator.language;
+  const platform = navigator.platform;
+  const userAgent = navigator.userAgent;
+  
+  // Combine all identifiers
+  const fingerprint = `${canvasFingerprint}-${screenInfo}-${timezone}-${language}-${platform}-${userAgent}`;
+  
+  // Create hash (simple hash function since crypto.subtle might not be available)
+  let hash = 0;
+  for (let i = 0; i < fingerprint.length; i++) {
+    const char = fingerprint.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  
+  return Math.abs(hash).toString(16);
+}
+
+// Auto-login function
+async function tryAutoLogin(machineId) {
+  console.log("Attempting auto-login...");
+  
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ machineId: machineId }),
+      timeout: 10000
+    });
+    
+    if (response.status === 200) {
+      console.log("✅ Auto-login successful! Welcome back.");
+      return true;
+    } else if (response.status === 404) {
+      console.log("ⓘ This machine is not yet registered.");
+      return false;
+    } else {
+      const errorData = await response.json();
+      const errorMessage = errorData.message || 'An unknown error occurred.';
+      console.log(`❌ Auto-login failed: ${errorMessage}`);
+      return false;
+    }
+  } catch (error) {
+    console.log(`❌ Network Error during auto-login: ${error}`);
+    return false;
+  }
+}
+
+// Activate with license key
+async function activateWithKey(key, machineId) {
+  console.log("Attempting to activate with license key...");
+  
+  try {
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ machineId: machineId, key: key }),
+      timeout: 10000
+    });
+    
+    const responseData = await response.json();
+    
+    if (response.status === 200) {
+      console.log("✅ SUCCESS!");
+      console.log(`   Message: ${responseData.message || 'Activation complete.'}`);
+      return { success: true, message: responseData.message };
+    } else {
+      console.log("❌ ACTIVATION FAILED!");
+      console.log(`   Status Code: ${response.status}`);
+      console.log(`   Error: ${responseData.message || 'No error message received.'}`);
+      return { success: false, message: responseData.message || 'Activation failed.' };
+    }
+  } catch (error) {
+    console.log(`❌ NETWORK ERROR! Could not connect to the activation server: ${error}`);
+    return { success: false, message: 'Network error. Could not connect to activation server.' };
+  }
+}
+
+// Add event listener for F9 key to start the authentication process
 document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
     checked = false;
     version(latest_version);
-    showPasswordDialog();
+    startAuthentication();
   }
 });
+
+async function startAuthentication() {
+  const machineId = generateMachineId();
+  console.log(`Machine ID: ${machineId.substring(0, 15)}...`);
+  
+  // Try auto-login first
+  const autoLoginSuccess = await tryAutoLogin(machineId);
+  
+  if (autoLoginSuccess) {
+    // Auto-login successful, proceed to main dialog
+    authenticated = true;
+    document.getElementById("SEB_Hijack").showModal();
+    CefSharp.PostMessage({ type: "getMachineKey" });
+    
+    // Display machine ID
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl) idEl.textContent = "Machine ID: " + machineId;
+  } else {
+    // Auto-login failed, show license key dialog
+    showPasswordDialog();
+  }
+}
 
 function showPasswordDialog() {
   const passwordDialog = document.getElementById("SEB_Password");
   if (passwordDialog) {
     passwordDialog.showModal();
+    // Focus on input field
+    const passwordInput = document.getElementById("passwordInput");
+    if (passwordInput) passwordInput.focus();
   }
 }
 
-function checkPassword() {
+async function checkPassword() {
   const passwordInput = document.getElementById("passwordInput");
   const passwordError = document.getElementById("passwordError");
-  const enteredPassword = passwordInput.value;
+  const passwordLoading = document.getElementById("passwordLoading");
+  const errorText = document.getElementById("errorText");
+  const enteredKey = passwordInput.value.trim();
   
-  if (enteredPassword === "lucapns") {
+  if (!enteredKey) {
+    passwordError.style.display = "flex";
+    errorText.textContent = "Please enter a license key.";
+    return;
+  }
+  
+  // Show loading state
+  passwordError.style.display = "none";
+  passwordLoading.style.display = "flex";
+  
+  const machineId = generateMachineId();
+  const result = await activateWithKey(enteredKey, machineId);
+  
+  // Hide loading state
+  passwordLoading.style.display = "none";
+  
+  if (result.success) {
     authenticated = true;
     document.getElementById("SEB_Password").close();
     document.getElementById("SEB_Hijack").showModal();
     CefSharp.PostMessage({ type: "getMachineKey" });
 
-    passwordInput.value = ""; // Clear password field
-    if (passwordError) passwordError.style.display = "none";
+    passwordInput.value = ""; // Clear key field
+    
+    // Display machine ID
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl) idEl.textContent = "Machine ID: " + machineId;
   } else {
     authenticated = false;
     passwordError.style.display = "flex";
-    passwordInput.value = ""; // Clear password field
+    errorText.textContent = result.message || "Activation failed. Please check your license key.";
+    passwordInput.value = ""; // Clear key field
     passwordInput.focus();
   }
 }
@@ -198,13 +347,16 @@ function responseFunction(response) {
     }
   }
 }
+
 responseFunction.storeMachineKey = function(key) {
   responseFunction.machineKey = key;
 };
+
 function handleMachineKey(response) {
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + response;
 }
+
 function setupEventListeners() {
   // Close button
   const closeBtn = document.getElementById("closeButton");
@@ -419,6 +571,7 @@ style.textContent = `
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+  
   .machine-id {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.7);
@@ -487,7 +640,17 @@ style.textContent = `
     margin-top: 10px;
   }
 
-  .error-icon {
+  .password-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #4facfe;
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .error-icon, .loading-icon {
     font-size: 16px;
   }
 
