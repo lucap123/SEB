@@ -1,4 +1,5 @@
 const latest_version = "3";
+const API_ENDPOINT = "https://68c676d90016b02b3ad8.fra.appwrite.run/";
 var checked = false;
 var authenticated = false;
 
@@ -13,16 +14,16 @@ var passwordDialogInnerHTML = `
   
   <div class="password-content">
     <h2 class="password-title">Authentication Required</h2>
-    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
+    <p class="password-subtitle">Enter your license key to activate Sigma Luca</p>
     
     <div class="password-input-container">
-      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
+      <input type="password" id="passwordInput" placeholder="Enter license key..." class="password-input">
       <button id="submitPasswordButton" class="submit-btn">Unlock</button>
     </div>
     
     <div id="passwordError" class="password-error" style="display: none;">
       <span class="error-icon">❌</span>
-      <span class="error-text">Incorrect password. Please try again.</span>
+      <span class="error-text">Activation failed. Please try again.</span>
     </div>
   </div>
 `;
@@ -79,7 +80,7 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
     checked = false;
     version(latest_version);
-    showPasswordDialog();
+    initiateAuthFlow();
   }
 });
 
@@ -90,23 +91,126 @@ function showPasswordDialog() {
   }
 }
 
-function checkPassword() {
+// Store and propagate the machine ID once received
+function setMachineId(id) {
+  responseFunction.machineKey = id;
+  const idEl = document.getElementById("machineIdDisplay");
+  if (idEl) idEl.textContent = "Machine ID: " + id;
+  if (typeof setMachineId._resolvers !== "undefined" && Array.isArray(setMachineId._resolvers)) {
+    setMachineId._resolvers.forEach((r) => {
+      try { r(id); } catch (e) {}
+    });
+    setMachineId._resolvers = [];
+  }
+}
+setMachineId._resolvers = [];
+
+async function waitForMachineId(timeoutMs = 7000) {
+  if (responseFunction.machineKey) return responseFunction.machineKey;
+  return new Promise((resolve) => {
+    let done = false;
+    const timer = setTimeout(() => {
+      if (!done) {
+        done = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+    setMachineId._resolvers.push((id) => {
+      if (!done) {
+        done = true;
+        clearTimeout(timer);
+        resolve(id);
+      }
+    });
+  });
+}
+
+async function tryAutoLoginWithMachineId(machineId) {
+  try {
+    const res = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ machineId })
+    });
+    return res.status === 200;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function activateWithKey(key, machineId) {
+  try {
+    const res = await fetch(API_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ machineId, key })
+    });
+    if (res.status === 200) {
+      return { ok: true };
+    } else {
+      let msg = "Activation failed. Please try again.";
+      try {
+        const data = await res.json();
+        if (data && data.message) msg = data.message;
+      } catch (_) {}
+      return { ok: false, message: msg };
+    }
+  } catch (e) {
+    return { ok: false, message: "Network error. Please try again." };
+  }
+}
+
+async function initiateAuthFlow() {
+  // Always request latest machine key from host
+  try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
+  const machineId = await waitForMachineId(7000);
+
+  if (machineId) {
+    const ok = await tryAutoLoginWithMachineId(machineId);
+    if (ok) {
+      authenticated = true;
+      const passwordDlg = document.getElementById("SEB_Password");
+      if (passwordDlg && passwordDlg.open) passwordDlg.close();
+      const mainDlg = document.getElementById("SEB_Hijack");
+      mainDlg.showModal();
+      return;
+    }
+  }
+
+  // Fallback: show activation (password) dialog
+  showPasswordDialog();
+}
+
+async function checkPassword() {
   const passwordInput = document.getElementById("passwordInput");
   const passwordError = document.getElementById("passwordError");
-  const enteredPassword = passwordInput.value;
-  
-  if (enteredPassword === "lucapns") {
-    authenticated = true;
-    document.getElementById("SEB_Password").close();
-    document.getElementById("SEB_Hijack").showModal();
-    CefSharp.PostMessage({ type: "getMachineKey" });
+  const errorText = passwordError ? passwordError.querySelector(".error-text") : null;
+  const key = (passwordInput.value || "").trim();
 
-    passwordInput.value = ""; // Clear password field
+  // Ensure we have a machine ID
+  let machineId = responseFunction.machineKey;
+  if (!machineId) {
+    try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
+    machineId = await waitForMachineId(7000);
+  }
+
+  const result = await activateWithKey(key, machineId || "");
+  if (result.ok) {
+    authenticated = true;
+    const dlg = document.getElementById("SEB_Password");
+    if (dlg && dlg.open) dlg.close();
+    document.getElementById("SEB_Hijack").showModal();
+    if (machineId) setMachineId(machineId);
+
+    passwordInput.value = "";
     if (passwordError) passwordError.style.display = "none";
   } else {
     authenticated = false;
-    passwordError.style.display = "flex";
-    passwordInput.value = ""; // Clear password field
+    if (passwordError) {
+      passwordError.style.display = "flex";
+      if (errorText) errorText.textContent = result.message || "Activation failed. Please try again.";
+    }
+    passwordInput.value = "";
     passwordInput.focus();
   }
 }
@@ -114,10 +218,9 @@ function checkPassword() {
 function responseFunction(response) {
   checked = true;
 
-  // If response is the machine key, show it immediately
+  // If response is the machine key, store and show it immediately
   if (response !== true && response !== false) {
-    const idEl = document.getElementById("machineIdDisplay");
-    if (idEl) idEl.textContent = "Machine ID: " + response;
+    setMachineId(response);
     return;
   }
 
@@ -199,11 +302,10 @@ function responseFunction(response) {
   }
 }
 responseFunction.storeMachineKey = function(key) {
-  responseFunction.machineKey = key;
+  setMachineId(key);
 };
 function handleMachineKey(response) {
-  const idEl = document.getElementById("machineIdDisplay");
-  if (idEl) idEl.textContent = "Machine ID: " + response;
+  setMachineId(response);
 }
 function setupEventListeners() {
   // Close button
