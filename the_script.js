@@ -738,7 +738,9 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-
+window.addEventListener("DOMContentLoaded", () => {
+  CefSharp.PostMessage({ type: "getMachineKey" });
+});
 // Setup initial event listeners
 setupEventListeners();
 setupPasswordEventListeners();
