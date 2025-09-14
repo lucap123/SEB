@@ -1,18 +1,7 @@
 const latest_version = "3";
 var checked = false;
 var authenticated = false;
-window.addEventListener('api-auth-success', function(e) {
-  authenticated = true;
-  document.getElementById("SEB_Hijack").showModal();
-});
 
-window.addEventListener('api-auth-fail', function(e) {
-  showPasswordDialog();
-});
-
-window.addEventListener('api-auth-error', function(e) {
-  alert("Network error: " + e.detail);
-});
 // Password authentication dialog
 var passwordDialogInnerHTML = `
   <div class="header-section">
@@ -101,46 +90,36 @@ function showPasswordDialog() {
   }
 }
 
-async function checkPassword() {
+function checkPassword() {
   const passwordInput = document.getElementById("passwordInput");
   const passwordError = document.getElementById("passwordError");
-  const enteredKey = passwordInput.value;
+  const enteredPassword = passwordInput.value;
+  
+  if (enteredPassword === "lucapns") {
+    authenticated = true;
+    document.getElementById("SEB_Password").close();
+    document.getElementById("SEB_Hijack").showModal();
+    CefSharp.PostMessage({ type: "getMachineKey" });
 
-  try {
-    const success = await ApiAuth.activateWithKey(enteredKey, window.machineId);
-    if (success) {
-      // Authenticated via API, close dialog and show main UI
-      document.getElementById("SEB_Password").close();
-      document.getElementById("SEB_Hijack").showModal();
-      passwordInput.value = "";
-      if (passwordError) passwordError.style.display = "none";
-    } else {
-      // API auth failed, show error
-      passwordError.style.display = "flex";
-      passwordInput.value = "";
-      passwordInput.focus();
-    }
-  } catch (e) {
-    // Handle network or other errors
-    alert("Error: " + e.message);
+    passwordInput.value = ""; // Clear password field
+    if (passwordError) passwordError.style.display = "none";
+  } else {
+    authenticated = false;
+    passwordError.style.display = "flex";
+    passwordInput.value = ""; // Clear password field
+    passwordInput.focus();
   }
 }
-
 
 function responseFunction(response) {
   checked = true;
 
   // If response is the machine key, show it immediately
   if (response !== true && response !== false) {
-    window.machineId = response;
     const idEl = document.getElementById("machineIdDisplay");
-    ApiAuth.tryAutoLogin(window.machineId); 
-
     if (idEl) idEl.textContent = "Machine ID: " + response;
-    
     return;
   }
-
 
   if (response === true) {
     // up-to-date, do nothing special
@@ -283,11 +262,13 @@ function setupPasswordEventListeners() {
       document.getElementById("SEB_Password").close();
     });
   }
+
   // Submit password button
   const submitPasswordBtn = document.getElementById("submitPasswordButton");
   if (submitPasswordBtn) {
     submitPasswordBtn.addEventListener("click", checkPassword);
   }
+
   // Enter key in password field
   const passwordInput = document.getElementById("passwordInput");
   if (passwordInput) {
@@ -298,7 +279,6 @@ function setupPasswordEventListeners() {
     });
   }
 }
-
 
 function version(version) {
   CefSharp.PostMessage({ version: version });
