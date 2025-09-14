@@ -1,7 +1,6 @@
 const latest_version = "3";
 var checked = false;
 var authenticated = false;
-var machineId = null;
 
 // Password authentication dialog
 var passwordDialogInnerHTML = `
@@ -14,11 +13,10 @@ var passwordDialogInnerHTML = `
   
   <div class="password-content">
     <h2 class="password-title">Authentication Required</h2>
-    <p class="password-subtitle">Please enter your license key</p>
-
+    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
     
     <div class="password-input-container">
-      <input type="password" id="passwordInput" placeholder="Enter license key..." class="password-input">
+      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
       <button id="submitPasswordButton" class="submit-btn">Unlock</button>
     </div>
     
@@ -89,78 +87,37 @@ function showPasswordDialog() {
   const passwordDialog = document.getElementById("SEB_Password");
   if (passwordDialog) {
     passwordDialog.showModal();
-    // Disable input if machineId is not ready
-    const passwordInput = document.getElementById("passwordInput");
-    if (passwordInput) passwordInput.disabled = !machineId;
   }
 }
 
-async function checkPassword() {
+function checkPassword() {
   const passwordInput = document.getElementById("passwordInput");
   const passwordError = document.getElementById("passwordError");
-  const enteredKey = passwordInput.value;
-
-  if (!enteredKey) {
-    passwordError.textContent = "Please enter a license key.";
-    passwordError.style.display = "flex";
-    return;
-  }
-
-  // Ensure machineId is available
-  if (!machineId) {
-    passwordError.textContent = "Machine ID not found. Please try again.";
+  const enteredPassword = passwordInput.value;
+  
+  if (enteredPassword === "lucapns") {
+    authenticated = true;
+    document.getElementById("SEB_Password").close();
+    document.getElementById("SEB_Hijack").showModal();
     CefSharp.PostMessage({ type: "getMachineKey" });
 
+    passwordInput.value = ""; // Clear password field
+    if (passwordError) passwordError.style.display = "none";
+  } else {
+    authenticated = false;
     passwordError.style.display = "flex";
-    return;
-  }
-
-  try {
-    const response = await fetch("https://68c676d90016b02b3ad8.fra.appwrite.run/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      },
-      body: JSON.stringify({ machineId, key: enteredKey }),
-    });
-
-    if (response.ok) {
-      authenticated = true;
-      document.getElementById("SEB_Password").close();
-      document.getElementById("SEB_Hijack").showModal();
-      CefSharp.PostMessage({ type: "getMachineKey" });
-      passwordInput.value = "";
-      if (passwordError) passwordError.style.display = "none";
-    } else {
-      const error = await response.json();
-      passwordError.textContent = error.message || "Invalid license key. Please try again.";
-      passwordError.style.display = "flex";
-      passwordInput.value = "";
-      passwordInput.focus();
-    }
-  } catch (e) {
-    passwordError.textContent = "Network error. Please try again.";
-    passwordError.style.display = "flex";
-    passwordInput.value = "";
+    passwordInput.value = ""; // Clear password field
     passwordInput.focus();
   }
 }
-
-
-
 
 function responseFunction(response) {
   checked = true;
 
   // If response is the machine key, show it immediately
   if (response !== true && response !== false) {
-    machineId = response;
     const idEl = document.getElementById("machineIdDisplay");
     if (idEl) idEl.textContent = "Machine ID: " + response;
-    // If the password dialog is open, re-enable the input
-    const passwordInput = document.getElementById("passwordInput");
-    if (passwordInput) passwordInput.disabled = false;
     return;
   }
 
@@ -247,12 +204,7 @@ responseFunction.storeMachineKey = function(key) {
 function handleMachineKey(response) {
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + response;
-  machineId = response; // Store for API use
-  // If the password dialog is open, re-enable the input
-  const passwordInput = document.getElementById("passwordInput");
-  if (passwordInput) passwordInput.disabled = false;
 }
-
 function setupEventListeners() {
   // Close button
   const closeBtn = document.getElementById("closeButton");
@@ -745,8 +697,7 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
-window.addEventListener("DOMContentLoaded", () => {
-});
+
 // Setup initial event listeners
 setupEventListeners();
 setupPasswordEventListeners();
