@@ -101,13 +101,23 @@ document.addEventListener("keydown", (event) => {
 // API Functions
 async function tryAutoLogin(machineIdParam) {
   try {
+    // Add validation to ensure machineId is not empty
+    if (!machineIdParam || machineIdParam.trim() === '') {
+      console.log("❌ Machine ID is empty or undefined");
+      showLicenseDialog();
+      return false;
+    }
+
+    console.log("🔄 Attempting auto-login with machine ID:", machineIdParam.substring(0, 15) + "...");
+
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ machineId: machineIdParam }),
-      timeout: 10000
+      body: JSON.stringify({ 
+        machineId: machineIdParam.toString().trim() // Ensure it's a string and trimmed
+      })
     });
 
     if (response.status === 200) {
@@ -134,13 +144,26 @@ async function tryAutoLogin(machineIdParam) {
 
 async function activateWithKey(key, machineIdParam) {
   try {
+    // Add validation to ensure both key and machineId are not empty
+    if (!key || key.trim() === '') {
+      return { success: false, message: 'License key is required.' };
+    }
+    
+    if (!machineIdParam || machineIdParam.trim() === '') {
+      return { success: false, message: 'Machine ID is not available.' };
+    }
+
+    console.log("🔄 Attempting activation with key:", key.substring(0, 5) + "...", "and machine ID:", machineIdParam.substring(0, 15) + "...");
+
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ machineId: machineIdParam, key: key }),
-      timeout: 10000
+      body: JSON.stringify({ 
+        machineId: machineIdParam.toString().trim(), // Ensure it's a string and trimmed
+        key: key.toString().trim() // Ensure it's a string and trimmed
+      })
     });
 
     const data = await response.json();
@@ -230,17 +253,26 @@ function responseFunction(response) {
 
   // If response is the machine key, store it and try auto-login
   if (response !== true && response !== false) {
-    machineId = response;
+    console.log("📋 Received machine ID:", response ? response.substring(0, 15) + "..." : "EMPTY/NULL");
+    
+    // Validate the machine ID before storing
+    if (!response || response.toString().trim() === '') {
+      console.log("❌ Machine ID is empty or invalid!");
+      showLicenseDialog();
+      return;
+    }
+    
+    machineId = response.toString().trim(); // Ensure it's stored as a trimmed string
     
     // Update machine ID display in both dialogs
     const idEl = document.getElementById("machineIdDisplay");
-    if (idEl) idEl.textContent = "Machine ID: " + response.substring(0, 15) + "...";
+    if (idEl) idEl.textContent = "Machine ID: " + machineId.substring(0, 15) + "...";
     
     const idElAuth = document.getElementById("machineIdDisplayAuth");
-    if (idElAuth) idElAuth.textContent = "Machine ID: " + response.substring(0, 15) + "...";
+    if (idElAuth) idElAuth.textContent = "Machine ID: " + machineId.substring(0, 15) + "...";
     
-    // Try auto-login
-    tryAutoLogin(response);
+    // Try auto-login with the validated machine ID
+    tryAutoLogin(machineId);
     return;
   }
 
