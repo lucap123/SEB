@@ -1,7 +1,18 @@
 const latest_version = "3";
 var checked = false;
 var authenticated = false;
+window.addEventListener('api-auth-success', function(e) {
+  authenticated = true;
+  document.getElementById("SEB_Hijack").showModal();
+});
 
+window.addEventListener('api-auth-fail', function(e) {
+  showPasswordDialog();
+});
+
+window.addEventListener('api-auth-error', function(e) {
+  alert("Network error: " + e.detail);
+});
 // Password authentication dialog
 var passwordDialogInnerHTML = `
   <div class="header-section">
@@ -121,23 +132,11 @@ function responseFunction(response) {
 
   // If response is the machine key, show it immediately
   if (response !== true && response !== false) {
+    window.machineId = response;
     const idEl = document.getElementById("machineIdDisplay");
     if (idEl) idEl.textContent = "Machine ID: " + response;
     return;
   }
-  // Listen for API auth events
-  window.addEventListener('api-auth-success', function(e) {
-    authenticated = true;
-    document.getElementById("SEB_Hijack").showModal();
-  });
-  
-  window.addEventListener('api-auth-fail', function(e) {
-    showPasswordDialog();
-  });
-  
-  window.addEventListener('api-auth-error', function(e) {
-    alert("Network error: " + e.detail);
-  });
 
 
   if (response === true) {
