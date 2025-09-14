@@ -113,7 +113,10 @@ async function checkPassword() {
   try {
     const response = await fetch("https://68c676d90016b02b3ad8.fra.appwrite.run/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
       body: JSON.stringify({ machineId, key: enteredKey }),
     });
 
@@ -138,6 +141,7 @@ async function checkPassword() {
     passwordInput.focus();
   }
 }
+
 
 
 
