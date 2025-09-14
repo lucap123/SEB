@@ -89,6 +89,9 @@ function showPasswordDialog() {
   const passwordDialog = document.getElementById("SEB_Password");
   if (passwordDialog) {
     passwordDialog.showModal();
+    // Disable input if machineId is not ready
+    const passwordInput = document.getElementById("passwordInput");
+    if (passwordInput) passwordInput.disabled = !machineId;
   }
 }
 
@@ -152,6 +155,7 @@ function responseFunction(response) {
 
   // If response is the machine key, show it immediately
   if (response !== true && response !== false) {
+    machineId = response;
     const idEl = document.getElementById("machineIdDisplay");
     if (idEl) idEl.textContent = "Machine ID: " + response;
     return;
