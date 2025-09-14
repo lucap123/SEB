@@ -134,7 +134,10 @@ function responseFunction(response) {
   if (response !== true && response !== false) {
     window.machineId = response;
     const idEl = document.getElementById("machineIdDisplay");
+    ApiAuth.tryAutoLogin(window.machineId); 
+
     if (idEl) idEl.textContent = "Machine ID: " + response;
+    
     return;
   }
 
