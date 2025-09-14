@@ -105,7 +105,7 @@ function setMachineId(id) {
 }
 setMachineId._resolvers = [];
 
-async function waitForMachineId(timeoutMs = 7000) {
+async function waitForMachineId(timeoutMs = 15000) {
   if (responseFunction.machineKey) return responseFunction.machineKey;
   return new Promise((resolve) => {
     let done = false;
@@ -163,7 +163,7 @@ async function activateWithKey(key, machineId) {
 async function initiateAuthFlow() {
   // Always request latest machine key from host
   try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
-  const machineId = await waitForMachineId(7000);
+  const machineId = await waitForMachineId(15000);
 
   if (machineId) {
     const ok = await tryAutoLoginWithMachineId(machineId);
@@ -191,10 +191,20 @@ async function checkPassword() {
   let machineId = responseFunction.machineKey;
   if (!machineId) {
     try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
-    machineId = await waitForMachineId(7000);
+    machineId = await waitForMachineId(15000);
   }
 
-  const result = await activateWithKey(key, machineId || "");
+  if (!machineId) {
+    authenticated = false;
+    if (passwordError) {
+      passwordError.style.display = "flex";
+      if (errorText) errorText.textContent = "Machine ID not available yet. Please wait a moment and try again.";
+    }
+    passwordInput.focus();
+    return;
+  }
+
+  const result = await activateWithKey(key, machineId);
   if (result.ok) {
     authenticated = true;
     const dlg = document.getElementById("SEB_Password");
