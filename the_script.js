@@ -1,41 +1,28 @@
 const latest_version = "3";
 var checked = false;
 var authenticated = false;
-var machineId = null; // Store machine ID globally
 
-// API Configuration
-const API_ENDPOINT = "https://68c676d90016b02b3ad8.fra.appwrite.run/";
-
-// License key authentication dialog (formerly password dialog)
-var licenseDialogInnerHTML = `
+// Password authentication dialog
+var passwordDialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
       <h1 class="app-title">Sigma Luca</h1>
     </div>
-    <button class="close-btn" id="closeLicenseButton">×</button>
+    <button class="close-btn" id="closePasswordButton">×</button>
   </div>
   
   <div class="password-content">
-    <h2 class="password-title">License Activation</h2>
-    <p class="password-subtitle">Enter your license key to activate Sigma Luca</p>
+    <h2 class="password-title">Authentication Required</h2>
+    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
     
     <div class="password-input-container">
-      <input type="text" id="licenseInput" placeholder="Enter license key..." class="password-input">
-      <button id="submitLicenseButton" class="submit-btn">Activate</button>
+      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
+      <button id="submitPasswordButton" class="submit-btn">Unlock</button>
     </div>
     
-    <div id="licenseError" class="password-error" style="display: none;">
+    <div id="passwordError" class="password-error" style="display: none;">
       <span class="error-icon">❌</span>
-      <span class="error-text" id="errorMessage">Activation failed. Please try again.</span>
-    </div>
-    
-    <div id="licenseSuccess" class="license-success" style="display: none;">
-      <span class="success-icon">✅</span>
-      <span class="success-text">License activated successfully!</span>
-    </div>
-    
-    <div class="machine-key-section">
-      <span id="machineIdDisplayAuth" class="machine-id">Machine ID: loading...</span>
+      <span class="error-text">Incorrect password. Please try again.</span>
     </div>
   </div>
 `;
@@ -87,194 +74,71 @@ var dialogInnerHTML = `
   </div>
 `;
 
-// Add event listener for F9 key to get machine ID and try auto-login
+// Add event listener for F9 key to open the password dialog
 document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
     checked = false;
     version(latest_version);
-    
-    // Get machine ID first
-    CefSharp.PostMessage({ type: "getMachineKey" });
+    showPasswordDialog();
   }
 });
 
-// API Functions
-async function tryAutoLogin(machineIdParam) {
+function showPasswordDialog() {
+  const passwordDialog = document.getElementById("SEB_Password");
+  if (passwordDialog) {
+    passwordDialog.showModal();
+  }
+}
+
+async function checkPassword() {
+  const passwordInput = document.getElementById("passwordInput");
+  const passwordError = document.getElementById("passwordError");
+  const enteredKey = passwordInput.value;
+
   try {
-    // Add validation to ensure machineId is not empty
-    if (!machineIdParam || machineIdParam.trim() === '') {
-      console.log("❌ Machine ID is empty or undefined");
-      showLicenseDialog();
-      return false;
-    }
-
-    console.log("🔄 Attempting auto-login with machine ID:", machineIdParam.substring(0, 15) + "...");
-
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        machineId: machineIdParam.toString().trim() // Ensure it's a string and trimmed
-      })
-    });
-
-    if (response.status === 200) {
-      console.log("✅ Auto-login successful! Welcome back.");
-      authenticated = true;
+    const success = await ApiAuth.activateWithKey(enteredKey, window.machineId);
+    if (success) {
+      // Authenticated via API, close dialog and show main UI
+      document.getElementById("SEB_Password").close();
       document.getElementById("SEB_Hijack").showModal();
-      return true;
-    } else if (response.status === 404) {
-      console.log("ⓘ This machine is not yet registered.");
-      showLicenseDialog();
-      return false;
+      passwordInput.value = "";
+      if (passwordError) passwordError.style.display = "none";
     } else {
-      const data = await response.json();
-      console.log(`❌ Auto-login failed: ${data.message || 'Unknown error'}`);
-      showLicenseDialog();
-      return false;
+      // API auth failed, show error
+      passwordError.style.display = "flex";
+      passwordInput.value = "";
+      passwordInput.focus();
     }
-  } catch (error) {
-    console.log(`❌ Network Error during auto-login: ${error}`);
-    showLicenseDialog();
-    return false;
+  } catch (e) {
+    // Handle network or other errors
+    alert("Error: " + e.message);
   }
 }
 
-async function activateWithKey(key, machineIdParam) {
-  try {
-    // Add validation to ensure both key and machineId are not empty
-    if (!key || key.trim() === '') {
-      return { success: false, message: 'License key is required.' };
-    }
-    
-    if (!machineIdParam || machineIdParam.trim() === '') {
-      return { success: false, message: 'Machine ID is not available.' };
-    }
-
-    console.log("🔄 Attempting activation with key:", key.substring(0, 5) + "...", "and machine ID:", machineIdParam.substring(0, 15) + "...");
-
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        machineId: machineIdParam.toString().trim(), // Ensure it's a string and trimmed
-        key: key.toString().trim() // Ensure it's a string and trimmed
-      })
-    });
-
-    const data = await response.json();
-
-    if (response.status === 200) {
-      console.log("✅ SUCCESS! Activation complete.");
-      return { success: true, message: data.message || 'Activation complete.' };
-    } else {
-      console.log(`❌ ACTIVATION FAILED! Status: ${response.status}`);
-      return { success: false, message: data.message || 'Activation failed.' };
-    }
-  } catch (error) {
-    console.log(`❌ NETWORK ERROR! ${error}`);
-    return { success: false, message: 'Network error. Please check your connection.' };
-  }
-}
-
-function showLicenseDialog() {
-  const licenseDialog = document.getElementById("SEB_License");
-  if (licenseDialog) {
-    // Update machine ID display in license dialog
-    const idEl = document.getElementById("machineIdDisplayAuth");
-    if (idEl && machineId) {
-      idEl.textContent = "Machine ID: " + machineId.substring(0, 15) + "...";
-    }
-    licenseDialog.showModal();
-  }
-}
-
-async function checkLicense() {
-  const licenseInput = document.getElementById("licenseInput");
-  const licenseError = document.getElementById("licenseError");
-  const licenseSuccess = document.getElementById("licenseSuccess");
-  const errorMessage = document.getElementById("errorMessage");
-  const enteredKey = licenseInput.value.trim();
-  
-  if (!enteredKey) {
-    errorMessage.textContent = "Please enter a license key.";
-    licenseError.style.display = "flex";
-    licenseSuccess.style.display = "none";
-    return;
-  }
-
-  if (!machineId) {
-    errorMessage.textContent = "Machine ID not available. Please try again.";
-    licenseError.style.display = "flex";
-    licenseSuccess.style.display = "none";
-    return;
-  }
-
-  // Show loading state
-  const submitBtn = document.getElementById("submitLicenseButton");
-  const originalText = submitBtn.textContent;
-  submitBtn.textContent = "Activating...";
-  submitBtn.disabled = true;
-
-  const result = await activateWithKey(enteredKey, machineId);
-
-  // Reset button
-  submitBtn.textContent = originalText;
-  submitBtn.disabled = false;
-
-  if (result.success) {
-    authenticated = true;
-    licenseSuccess.style.display = "flex";
-    licenseError.style.display = "none";
-    
-    // Close license dialog and open main dialog after short delay
-    setTimeout(() => {
-      document.getElementById("SEB_License").close();
-      document.getElementById("SEB_Hijack").showModal();
-      licenseInput.value = ""; // Clear license field
-      licenseSuccess.style.display = "none"; // Reset for next time
-    }, 1500);
-  } else {
-    authenticated = false;
-    errorMessage.textContent = result.message;
-    licenseError.style.display = "flex";
-    licenseSuccess.style.display = "none";
-    licenseInput.value = ""; // Clear license field
-    licenseInput.focus();
-  }
-}
 
 function responseFunction(response) {
   checked = true;
 
-  // If response is the machine key, store it and try auto-login
+  // If response is the machine key, show it immediately
   if (response !== true && response !== false) {
-    console.log("📋 Received machine ID:", response ? response.substring(0, 15) + "..." : "EMPTY/NULL");
-    
-    // Validate the machine ID before storing
-    if (!response || response.toString().trim() === '') {
-      console.log("❌ Machine ID is empty or invalid!");
-      showLicenseDialog();
-      return;
-    }
-    
-    machineId = response.toString().trim(); // Ensure it's stored as a trimmed string
-    
-    // Update machine ID display in both dialogs
     const idEl = document.getElementById("machineIdDisplay");
-    if (idEl) idEl.textContent = "Machine ID: " + machineId.substring(0, 15) + "...";
-    
-    const idElAuth = document.getElementById("machineIdDisplayAuth");
-    if (idElAuth) idElAuth.textContent = "Machine ID: " + machineId.substring(0, 15) + "...";
-    
-    // Try auto-login with the validated machine ID
-    tryAutoLogin(machineId);
+    if (idEl) idEl.textContent = "Machine ID: " + response;
     return;
   }
+  // Listen for API auth events
+  window.addEventListener('api-auth-success', function(e) {
+    authenticated = true;
+    document.getElementById("SEB_Hijack").showModal();
+  });
+  
+  window.addEventListener('api-auth-fail', function(e) {
+    showPasswordDialog();
+  });
+  
+  window.addEventListener('api-auth-error', function(e) {
+    alert("Network error: " + e.detail);
+  });
+
 
   if (response === true) {
     // up-to-date, do nothing special
@@ -337,7 +201,7 @@ function responseFunction(response) {
               <span class="btn-icon">💥</span>
               Crash SEB
             </button>
-            <span id="machineIdDisplay" class="machine-id">Machine ID: ${machineId ? machineId.substring(0, 15) + '...' : 'loading...'}</span>
+            <span id="machineIdDisplay" class="machine-id">Machine ID: loading...</span>
           </div>
         </div>
       </div>
@@ -345,9 +209,21 @@ function responseFunction(response) {
     
     // Re-add event listeners
     setupEventListeners();
+
+    // Set machine ID after dialog is rendered
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl && typeof responseFunction.machineKey !== "undefined") {
+      idEl.textContent = "Machine ID: " + responseFunction.machineKey;
+    }
   }
 }
-
+responseFunction.storeMachineKey = function(key) {
+  responseFunction.machineKey = key;
+};
+function handleMachineKey(response) {
+  const idEl = document.getElementById("machineIdDisplay");
+  if (idEl) idEl.textContent = "Machine ID: " + response;
+}
 function setupEventListeners() {
   // Close button
   const closeBtn = document.getElementById("closeButton");
@@ -397,31 +273,30 @@ function setupEventListeners() {
   }
 }
 
-function setupLicenseEventListeners() {
-  // Close license dialog button
-  const closeLicenseBtn = document.getElementById("closeLicenseButton");
-  if (closeLicenseBtn) {
-    closeLicenseBtn.addEventListener("click", () => {
-      document.getElementById("SEB_License").close();
+function setupPasswordEventListeners() {
+  // Close password dialog button
+  const closePasswordBtn = document.getElementById("closePasswordButton");
+  if (closePasswordBtn) {
+    closePasswordBtn.addEventListener("click", () => {
+      document.getElementById("SEB_Password").close();
     });
   }
-
-  // Submit license button
-  const submitLicenseBtn = document.getElementById("submitLicenseButton");
-  if (submitLicenseBtn) {
-    submitLicenseBtn.addEventListener("click", checkLicense);
+  // Submit password button
+  const submitPasswordBtn = document.getElementById("submitPasswordButton");
+  if (submitPasswordBtn) {
+    submitPasswordBtn.addEventListener("click", checkPassword);
   }
-
-  // Enter key in license field
-  const licenseInput = document.getElementById("licenseInput");
-  if (licenseInput) {
-    licenseInput.addEventListener("keypress", (e) => {
+  // Enter key in password field
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
-        checkLicense();
+        checkPassword();
       }
     });
   }
 }
+
 
 function version(version) {
   CefSharp.PostMessage({ version: version });
@@ -456,11 +331,11 @@ function showurl() {
   document.getElementById("urlInput").value = url;
 }
 
-// Create the license dialog element (formerly password dialog)
-const licenseDialog = document.createElement("dialog");
-licenseDialog.innerHTML = licenseDialogInnerHTML;
-licenseDialog.id = "SEB_License";
-document.body.appendChild(licenseDialog);
+// Create the password dialog element
+const passwordDialog = document.createElement("dialog");
+passwordDialog.innerHTML = passwordDialogInnerHTML;
+passwordDialog.id = "SEB_Password";
+document.body.appendChild(passwordDialog);
 
 // Create the main dialog element
 const dialog = document.createElement("dialog");
@@ -468,7 +343,7 @@ dialog.innerHTML = dialogInnerHTML;
 dialog.id = "SEB_Hijack";
 document.body.appendChild(dialog);
 
-// Create and append a style element for styling (including license styles)
+// Create and append a style element for styling (including password styles)
 const style = document.createElement("style");
 style.textContent = `
   dialog {
@@ -562,7 +437,6 @@ style.textContent = `
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  
   .machine-id {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.7);
@@ -616,14 +490,9 @@ style.textContent = `
     box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
   }
 
-  .submit-btn:hover:not(:disabled) {
+  .submit-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
-  }
-
-  .submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
   }
 
   .password-error {
@@ -636,17 +505,7 @@ style.textContent = `
     margin-top: 10px;
   }
 
-  .license-success {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #2ed573;
-    font-size: 14px;
-    margin-top: 10px;
-  }
-
-  .error-icon, .success-icon {
+  .error-icon {
     font-size: 16px;
   }
 
@@ -859,4 +718,4 @@ document.head.appendChild(style);
 
 // Setup initial event listeners
 setupEventListeners();
-setupLicenseEventListeners();
+setupPasswordEventListeners();
