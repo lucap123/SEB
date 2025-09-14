@@ -1,6 +1,7 @@
 const latest_version = "3";
 var checked = false;
 var authenticated = false;
+var machineId = null;
 
 // Password authentication dialog
 var passwordDialogInnerHTML = `
@@ -13,10 +14,11 @@ var passwordDialogInnerHTML = `
   
   <div class="password-content">
     <h2 class="password-title">Authentication Required</h2>
-    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
+    <p class="password-subtitle">Please enter your license key</p>
+
     
     <div class="password-input-container">
-      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
+      <input type="password" id="passwordInput" placeholder="Enter license key..." class="password-input">
       <button id="submitPasswordButton" class="submit-btn">Unlock</button>
     </div>
     
@@ -90,26 +92,46 @@ function showPasswordDialog() {
   }
 }
 
-function checkPassword() {
+async function checkPassword() {
   const passwordInput = document.getElementById("passwordInput");
   const passwordError = document.getElementById("passwordError");
-  const enteredPassword = passwordInput.value;
-  
-  if (enteredPassword === "lucapns") {
-    authenticated = true;
-    document.getElementById("SEB_Password").close();
-    document.getElementById("SEB_Hijack").showModal();
-    CefSharp.PostMessage({ type: "getMachineKey" });
+  const enteredKey = passwordInput.value;
 
-    passwordInput.value = ""; // Clear password field
-    if (passwordError) passwordError.style.display = "none";
-  } else {
-    authenticated = false;
+  if (!enteredKey) {
+    passwordError.textContent = "Please enter a license key.";
     passwordError.style.display = "flex";
-    passwordInput.value = ""; // Clear password field
+    return;
+  }
+
+  try {
+    const response = await fetch("https://68c676d90016b02b3ad8.fra.appwrite.run/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ machineId, key: enteredKey }),
+    });
+
+    if (response.ok) {
+      authenticated = true;
+      document.getElementById("SEB_Password").close();
+      document.getElementById("SEB_Hijack").showModal();
+      CefSharp.PostMessage({ type: "getMachineKey" });
+      passwordInput.value = "";
+      if (passwordError) passwordError.style.display = "none";
+    } else {
+      const error = await response.json();
+      passwordError.textContent = error.message || "Invalid license key. Please try again.";
+      passwordError.style.display = "flex";
+      passwordInput.value = "";
+      passwordInput.focus();
+    }
+  } catch (e) {
+    passwordError.textContent = "Network error. Please try again.";
+    passwordError.style.display = "flex";
+    passwordInput.value = "";
     passwordInput.focus();
   }
 }
+
 
 function responseFunction(response) {
   checked = true;
@@ -204,7 +226,9 @@ responseFunction.storeMachineKey = function(key) {
 function handleMachineKey(response) {
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + response;
+  machineId = response; // Store for API use
 }
+
 function setupEventListeners() {
   // Close button
   const closeBtn = document.getElementById("closeButton");
