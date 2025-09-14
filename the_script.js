@@ -103,6 +103,13 @@ async function checkPassword() {
     return;
   }
 
+  // Ensure machineId is available
+  if (!machineId) {
+    passwordError.textContent = "Machine ID not found. Please try again.";
+    passwordError.style.display = "flex";
+    return;
+  }
+
   try {
     const response = await fetch("https://68c676d90016b02b3ad8.fra.appwrite.run/", {
       method: "POST",
@@ -131,6 +138,7 @@ async function checkPassword() {
     passwordInput.focus();
   }
 }
+
 
 
 function responseFunction(response) {
