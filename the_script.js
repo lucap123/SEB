@@ -94,6 +94,9 @@ function showPasswordDialog() {
 // Store and propagate the machine ID once received
 function setMachineId(id) {
   responseFunction.machineKey = id;
+  try { localStorage.setItem("machineId", id); } catch (e) {}
+  try { window.setMachineId = setMachineId; } catch (e) {}
+  try { window.machineId = id; } catch (e) {}
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + id;
   if (typeof setMachineId._resolvers !== "undefined" && Array.isArray(setMachineId._resolvers)) {
@@ -102,11 +105,64 @@ function setMachineId(id) {
     });
     setMachineId._resolvers = [];
   }
+  try { console.debug("[auth] machineId set:", id); } catch (e) {}
 }
 setMachineId._resolvers = [];
 
+// Try to discover machineId from URL params or localStorage
+function getMachineIdFromHints() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("machineId") || params.get("machine_id") || params.get("id");
+    if (q && q.length > 0) return q;
+  } catch (e) {}
+  try {
+    const saved = localStorage.getItem("machineId");
+    if (saved) return saved;
+  } catch (e) {}
+  return null;
+}
+
+// Ask the host for a machine id using different message types (for compatibility)
+function requestMachineId() {
+  try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
+  try { CefSharp.PostMessage({ type: "getMachineId" }); } catch (e) {}
+  try { CefSharp.PostMessage({ type: "machineId" }); } catch (e) {}
+}
+
+// Accept machine id via postMessage or WebView2
+try {
+  window.addEventListener("message", (evt) => {
+    const d = evt.data;
+    if (!d) return;
+    if (typeof d === "string") {
+      // heuristic for hash-like id
+      if (/^[a-f0-9-]{16,}$/i.test(d)) setMachineId(d);
+    } else if (typeof d === "object") {
+      if (d.machineId) setMachineId(d.machineId);
+      else if (d.machineID) setMachineId(d.machineID);
+      else if (d.type === "machineId" && d.value) setMachineId(d.value);
+    }
+  });
+} catch (e) {}
+
+try {
+  if (window.chrome && window.chrome.webview && window.chrome.webview.addEventListener) {
+    window.chrome.webview.addEventListener("message", (evt) => {
+      const d = evt.data;
+      if (!d) return;
+      if (typeof d === "string" && /^[a-f0-9-]{16,}$/i.test(d)) setMachineId(d);
+      else if (d.machineId) setMachineId(d.machineId);
+      else if (d.machineID) setMachineId(d.machineID);
+      else if (d.type === "machineId" && d.value) setMachineId(d.value);
+    });
+  }
+} catch (e) {}
+
 async function waitForMachineId(timeoutMs = 15000) {
   if (responseFunction.machineKey) return responseFunction.machineKey;
+  const hinted = getMachineIdFromHints();
+  if (hinted) { setMachineId(hinted); return hinted; }
   return new Promise((resolve) => {
     let done = false;
     const timer = setTimeout(() => {
@@ -162,7 +218,7 @@ async function activateWithKey(key, machineId) {
 
 async function initiateAuthFlow() {
   // Always request latest machine key from host
-  try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
+  requestMachineId();
   const machineId = await waitForMachineId(15000);
 
   if (machineId) {
@@ -190,7 +246,7 @@ async function checkPassword() {
   // Ensure we have a machine ID
   let machineId = responseFunction.machineKey;
   if (!machineId) {
-    try { CefSharp.PostMessage({ type: "getMachineKey" }); } catch (e) {}
+    requestMachineId();
     machineId = await waitForMachineId(15000);
   }
 
@@ -813,3 +869,8 @@ document.head.appendChild(style);
 // Setup initial event listeners
 setupEventListeners();
 setupPasswordEventListeners();
+
+// Attempt auto-login on page load as well
+try {
+  window.addEventListener("DOMContentLoaded", () => { requestMachineId(); initiateAuthFlow(); });
+} catch (e) {}
