@@ -1,96 +1,28 @@
 const latest_version = "3";
 var checked = false;
 var authenticated = false;
-var machineId = null;
 
-// Configuration
-const API_ENDPOINT = "https://68c676d90016b02b3ad8.fra.appwrite.run/";
-
-
-// API Authentication Functions
-async function tryAutoLogin(machineId) {
-  console.log("Attempting auto-login...");
-  
-  try {
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ machineId })
-    });
-    
-    const data = await response.json();
-    
-    if (response.status === 200) {
-      console.log("✅ Auto-login successful!");
-      return { success: true, message: data.message };
-    } else if (response.status === 404) {
-      console.log("ⓘ This machine is not yet registered.");
-      return { success: false, needsActivation: true, message: data.message };
-    } else {
-      console.log(`❌ Auto-login failed: ${data.message}`);
-      return { success: false, message: data.message };
-    }
-  } catch (error) {
-    console.log(`❌ Network error during auto-login: ${error.message}`);
-    return { success: false, message: "Network error. Please try again." };
-  }
-}
-
-async function activateWithKey(key, machineId) {
-  console.log("Attempting activation with key...");
-  
-  try {
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ machineId, key })
-    });
-    
-    const data = await response.json();
-    
-    if (response.status === 200) {
-      console.log("✅ Activation successful!");
-      return { success: true, message: data.message };
-    } else {
-      console.log(`❌ Activation failed: ${data.message}`);
-      return { success: false, message: data.message };
-    }
-  } catch (error) {
-    console.log(`❌ Network error during activation: ${error.message}`);
-    return { success: false, message: "Network error. Please try again." };
-  }
-}
-
-// License key dialog content
-var licenseDialogInnerHTML = `
+// Password authentication dialog
+var passwordDialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
       <h1 class="app-title">Sigma Luca</h1>
     </div>
-    <button class="close-btn" id="closeLicenseButton">×</button>
+    <button class="close-btn" id="closePasswordButton">×</button>
   </div>
   
   <div class="password-content">
-    <h2 class="password-title">License Activation Required</h2>
-    <p class="password-subtitle">Please enter your license key to activate Sigma Luca</p>
+    <h2 class="password-title">Authentication Required</h2>
+    <p class="password-subtitle">Please enter the password to access Sigma Luca</p>
     
     <div class="password-input-container">
-      <input type="text" id="licenseKeyInput" placeholder="Enter license key..." class="password-input">
-      <button id="submitLicenseButton" class="submit-btn">Activate</button>
+      <input type="password" id="passwordInput" placeholder="Enter password..." class="password-input">
+      <button id="submitPasswordButton" class="submit-btn">Unlock</button>
     </div>
     
-    <div id="licenseError" class="password-error" style="display: none;">
+    <div id="passwordError" class="password-error" style="display: none;">
       <span class="error-icon">❌</span>
-      <span class="error-text" id="licenseErrorText">Activation failed. Please try again.</span>
-    </div>
-    
-    <div id="licenseSuccess" class="license-success" style="display: none;">
-      <span class="success-icon">✅</span>
-      <span class="success-text" id="licenseSuccessText">License activated successfully!</span>
+      <span class="error-text">Incorrect password. Please try again.</span>
     </div>
   </div>
 `;
@@ -142,110 +74,40 @@ var dialogInnerHTML = `
   </div>
 `;
 
-// Add event listener for F9 key to open the dialog
-document.addEventListener("keydown", async (event) => {
+// Add event listener for F9 key to open the password dialog
+document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
     checked = false;
     version(latest_version);
-    
-    // Get machine ID
-    machineId = CefSharp.PostMessage({ type: "getMachineKey" });
-
-    CefSharp.PostMessage({ type: "getMachineKey" });
-    console.log(`Machine ID: ${machineId}`);
-    
-    // Try auto-login first
-    const autoLoginResult = await tryAutoLogin(machineId);
-    
-    if (autoLoginResult.success) {
-      // Auto-login successful, show main dialog
-      authenticated = true;
-      document.getElementById("SEB_Hijack").showModal();
-      document.getElementById("machineIdDisplay").textContent = `Machine ID: ${machineId.substring(0, 15)}...`;
-      CefSharp.PostMessage({ type: "getMachineKey" });
-    } else if (autoLoginResult.needsActivation) {
-      // Show license activation dialog
-      showLicenseDialog();
-    } else {
-      // Show error and license dialog
-      showLicenseDialog(autoLoginResult.message);
-    }
+    showPasswordDialog();
   }
 });
 
-function showLicenseDialog(errorMessage = null) {
-  const licenseDialog = document.getElementById("SEB_License");
-  if (licenseDialog) {
-    if (errorMessage) {
-      const errorDiv = document.getElementById("licenseError");
-      const errorText = document.getElementById("licenseErrorText");
-      if (errorDiv && errorText) {
-        errorText.textContent = errorMessage;
-        errorDiv.style.display = "flex";
-      }
-    }
-    licenseDialog.showModal();
+function showPasswordDialog() {
+  const passwordDialog = document.getElementById("SEB_Password");
+  if (passwordDialog) {
+    passwordDialog.showModal();
   }
 }
 
-async function checkLicense() {
-  const licenseKeyInput = document.getElementById("licenseKeyInput");
-  const licenseError = document.getElementById("licenseError");
-  const licenseSuccess = document.getElementById("licenseSuccess");
-  const licenseErrorText = document.getElementById("licenseErrorText");
-  const licenseSuccessText = document.getElementById("licenseSuccessText");
-  const enteredKey = licenseKeyInput.value.trim();
+function checkPassword() {
+  const passwordInput = document.getElementById("passwordInput");
+  const passwordError = document.getElementById("passwordError");
+  const enteredPassword = passwordInput.value;
   
-  if (!enteredKey) {
-    licenseErrorText.textContent = "Please enter a license key.";
-    licenseError.style.display = "flex";
-    licenseSuccess.style.display = "none";
-    return;
-  }
-  
-  // Hide previous messages
-  licenseError.style.display = "none";
-  licenseSuccess.style.display = "none";
-  
-  // Disable button during request
-  const submitBtn = document.getElementById("submitLicenseButton");
-  const originalText = submitBtn.textContent;
-  submitBtn.textContent = "Activating...";
-  submitBtn.disabled = true;
-  
-  try {
-    const activationResult = await activateWithKey(enteredKey, machineId);
-    
-    if (activationResult.success) {
-      authenticated = true;
-      licenseSuccessText.textContent = activationResult.message;
-      licenseSuccess.style.display = "flex";
-      
-      // Clear the input
-      licenseKeyInput.value = "";
-      
-      // Close license dialog and open main dialog after a short delay
-      setTimeout(() => {
-        document.getElementById("SEB_License").close();
-        document.getElementById("SEB_Hijack").showModal();
-        document.getElementById("machineIdDisplay").textContent = `Machine ID: ${machineId}`;
-      }, 1500);
-    } else {
-      authenticated = false;
-      licenseErrorText.textContent = activationResult.message;
-      licenseError.style.display = "flex";
-      licenseKeyInput.value = ""; // Clear input
-      licenseKeyInput.focus();
-    }
-  } catch (error) {
-    licenseErrorText.textContent = "Network error. Please try again.";
-    licenseError.style.display = "flex";
-    licenseKeyInput.value = "";
-    licenseKeyInput.focus();
-  } finally {
-    // Re-enable button
-    submitBtn.textContent = originalText;
-    submitBtn.disabled = false;
+  if (enteredPassword === "lucapns") {
+    authenticated = true;
+    document.getElementById("SEB_Password").close();
+    document.getElementById("SEB_Hijack").showModal();
+    CefSharp.PostMessage({ type: "getMachineKey" });
+
+    passwordInput.value = ""; // Clear password field
+    if (passwordError) passwordError.style.display = "none";
+  } else {
+    authenticated = false;
+    passwordError.style.display = "flex";
+    passwordInput.value = ""; // Clear password field
+    passwordInput.focus();
   }
 }
 
@@ -331,21 +193,18 @@ function responseFunction(response) {
 
     // Set machine ID after dialog is rendered
     const idEl = document.getElementById("machineIdDisplay");
-    if (idEl && machineId) {
-      idEl.textContent = `Machine ID: ${machineId.substring(0, 15)}...`;
+    if (idEl && typeof responseFunction.machineKey !== "undefined") {
+      idEl.textContent = "Machine ID: " + responseFunction.machineKey;
     }
   }
 }
-
 responseFunction.storeMachineKey = function(key) {
   responseFunction.machineKey = key;
 };
-
 function handleMachineKey(response) {
   const idEl = document.getElementById("machineIdDisplay");
   if (idEl) idEl.textContent = "Machine ID: " + response;
 }
-
 function setupEventListeners() {
   // Close button
   const closeBtn = document.getElementById("closeButton");
@@ -395,27 +254,27 @@ function setupEventListeners() {
   }
 }
 
-function setupLicenseEventListeners() {
-  // Close license dialog button
-  const closeLicenseBtn = document.getElementById("closeLicenseButton");
-  if (closeLicenseBtn) {
-    closeLicenseBtn.addEventListener("click", () => {
-      document.getElementById("SEB_License").close();
+function setupPasswordEventListeners() {
+  // Close password dialog button
+  const closePasswordBtn = document.getElementById("closePasswordButton");
+  if (closePasswordBtn) {
+    closePasswordBtn.addEventListener("click", () => {
+      document.getElementById("SEB_Password").close();
     });
   }
 
-  // Submit license button
-  const submitLicenseBtn = document.getElementById("submitLicenseButton");
-  if (submitLicenseBtn) {
-    submitLicenseBtn.addEventListener("click", checkLicense);
+  // Submit password button
+  const submitPasswordBtn = document.getElementById("submitPasswordButton");
+  if (submitPasswordBtn) {
+    submitPasswordBtn.addEventListener("click", checkPassword);
   }
 
-  // Enter key in license field
-  const licenseKeyInput = document.getElementById("licenseKeyInput");
-  if (licenseKeyInput) {
-    licenseKeyInput.addEventListener("keypress", (e) => {
+  // Enter key in password field
+  const passwordInput = document.getElementById("passwordInput");
+  if (passwordInput) {
+    passwordInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
-        checkLicense();
+        checkPassword();
       }
     });
   }
@@ -454,11 +313,11 @@ function showurl() {
   document.getElementById("urlInput").value = url;
 }
 
-// Create the license dialog element
-const licenseDialog = document.createElement("dialog");
-licenseDialog.innerHTML = licenseDialogInnerHTML;
-licenseDialog.id = "SEB_License";
-document.body.appendChild(licenseDialog);
+// Create the password dialog element
+const passwordDialog = document.createElement("dialog");
+passwordDialog.innerHTML = passwordDialogInnerHTML;
+passwordDialog.id = "SEB_Password";
+document.body.appendChild(passwordDialog);
 
 // Create the main dialog element
 const dialog = document.createElement("dialog");
@@ -466,7 +325,7 @@ dialog.innerHTML = dialogInnerHTML;
 dialog.id = "SEB_Hijack";
 document.body.appendChild(dialog);
 
-// Create and append a style element for styling (including license styles)
+// Create and append a style element for styling (including password styles)
 const style = document.createElement("style");
 style.textContent = `
   dialog {
@@ -560,7 +419,6 @@ style.textContent = `
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  
   .machine-id {
     font-size: 12px;
     color: rgba(255, 255, 255, 0.7);
@@ -614,14 +472,9 @@ style.textContent = `
     box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
   }
 
-  .submit-btn:hover:not(:disabled) {
+  .submit-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(79, 172, 254, 0.4);
-  }
-
-  .submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
   }
 
   .password-error {
@@ -634,17 +487,7 @@ style.textContent = `
     margin-top: 10px;
   }
 
-  .license-success {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: #2ed573;
-    font-size: 14px;
-    margin-top: 10px;
-  }
-
-  .error-icon, .success-icon {
+  .error-icon {
     font-size: 16px;
   }
 
@@ -857,4 +700,4 @@ document.head.appendChild(style);
 
 // Setup initial event listeners
 setupEventListeners();
-setupLicenseEventListeners();
+setupPasswordEventListeners();
