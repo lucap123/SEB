@@ -60,9 +60,22 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "F9" || (event.ctrlKey && event.key === "k")) {
     checked = false;
     version(latest_version);
+    // Request machine key when dialog opens
+    requestMachineKey();
     document.getElementById("SEB_Hijack").showModal();
   }
 });
+
+// Function to request machine key
+function requestMachineKey() {
+  try {
+    CefSharp.PostMessage({ type: "getMachineKey" });
+  } catch (e) {
+    console.error("Failed to request machine key:", e);
+    const idEl = document.getElementById("machineIdDisplay");
+    if (idEl) idEl.textContent = "Machine ID: unavailable";
+  }
+}
 
 // Toggle text selection
 // Update the visual state of the text selection toggle
@@ -137,11 +150,15 @@ function setupCopyPasteListeners() {
 
 function responseFunction(response) {
   checked = true;
-  if (response !== true && response !== false) {
+  
+  // Handle machine key response (string response)
+  if (typeof response === 'string' && response !== 'true' && response !== 'false') {
     const idEl = document.getElementById("machineIdDisplay");
     if (idEl) idEl.textContent = "Machine ID: " + response;
     return;
   }
+  
+  // Handle version check response (boolean)
   if (response === false) {
     const dialog = document.getElementById("SEB_Hijack");
     dialog.innerHTML = `
@@ -201,26 +218,21 @@ function responseFunction(response) {
               <span class="btn-icon">💥</span>
               Crash SEB
             </button>
+          </div>
+          <div class="machine-key-section">
             <span id="machineIdDisplay" class="machine-id">Machine ID: loading...</span>
           </div>
         </div>
       </div>
     `;
     setupEventListeners();
-    const idEl = document.getElementById("machineIdDisplay");
-    if (idEl && typeof responseFunction.machineKey !== "undefined") {
-      idEl.textContent = "Machine ID: " + responseFunction.machineKey;
-    }
+    // Request machine key again after updating dialog
+    requestMachineKey();
   }
-}
-
-responseFunction.storeMachineKey = function(key) {
-  responseFunction.machineKey = key;
-};
-
-function handleMachineKey(response) {
-  const idEl = document.getElementById("machineIdDisplay");
-  if (idEl) idEl.textContent = "Machine ID: " + response;
+  // If response === true, dialog stays the same but we should still request machine key
+  else if (response === true) {
+    requestMachineKey();
+  }
 }
 
 function setupEventListeners() {
