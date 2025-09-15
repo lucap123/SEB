@@ -17,8 +17,9 @@ var dialogInnerHTML = `
       <div class="nav-item">
         <a onclick="showurl()" class="nav-link">Show Current URL</a>
       </div>
-      <div class="nav-item">
+      <div class="nav-item text-selection-toggle" id="textSelectionItem">
         <a onclick="toggleTextSelection()" class="nav-link" id="toggleSelectText">
+          <span class="toggle-indicator" id="toggleIndicator">●</span>
           <span id="selectTextStatus">Enable Text Selection</span>
         </a>
       </div>
@@ -64,10 +65,27 @@ document.addEventListener("keydown", (event) => {
 });
 
 // Toggle text selection
+// Update the visual state of the text selection toggle
+function updateTextSelectionUI() {
+  const status = document.getElementById('selectTextStatus');
+  const indicator = document.getElementById('toggleIndicator');
+  const item = document.getElementById('textSelectionItem');
+
+  if (textSelectionEnabled) {
+    status.textContent = "Disable Text Selection";
+    indicator.style.color = "#4ade80"; // Green
+    item.classList.add('toggle-enabled');
+  } else {
+    status.textContent = "Enable Text Selection";
+    indicator.style.color = "#ef4444"; // Red
+    item.classList.remove('toggle-enabled');
+  }
+}
+
+// Toggle text selection
 function toggleTextSelection() {
   textSelectionEnabled = !textSelectionEnabled;
   const style = document.getElementById('textSelectionStyle');
-  const status = document.getElementById('selectTextStatus');
 
   if (textSelectionEnabled) {
     if (!style) {
@@ -83,13 +101,14 @@ function toggleTextSelection() {
       `;
       document.head.appendChild(newStyle);
     }
-    status.textContent = "Disable Text Selection";
   } else {
     if (style) {
       style.remove();
     }
-    status.textContent = "Enable Text Selection";
   }
+
+  // Update the UI immediately after toggling
+  updateTextSelectionUI();
 }
 
 // Allow Ctrl+C/Cmd+C to work
@@ -533,7 +552,32 @@ style.textContent = `
     align-items: flex-start;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
+  .text-selection-toggle {
+  position: relative;
+}
 
+.text-selection-toggle.toggle-enabled {
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.toggle-indicator {
+  font-size: 12px;
+  color: #ef4444;
+  transition: color 0.3s ease;
+  margin-right: 5px;
+  font-weight: bold;
+}
+
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
   .banner-icon {
     font-size: 24px;
     margin-top: 2px;
