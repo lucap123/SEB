@@ -10,13 +10,10 @@ var dialogInnerHTML = `
   </div>
   <button class=""close-btn"" id=""closeButton"">×</button>
   </div>
-
   <div class=""main-content"">
             <div id=""authStatus"" class=""auth-status pending"">Auth Status: Checking...</div>
   <div class=""navigation-panel"">
-    <div class=""nav-item"">
-    <a onclick=""showurl()"" class=""nav-link"">Show Current URL</a>
-    </div>
+    <div class=""nav-item""><a onclick=""showurl()"" class=""nav-link"">Show Current URL</a></div>
     <div class=""nav-item text-selection-toggle"" id=""textSelectionItem"">
     <a onclick=""toggleTextSelection()"" class=""nav-link"" id=""toggleSelectText"">
       <span class=""toggle-indicator"" id=""toggleIndicator"">●</span>
@@ -24,43 +21,42 @@ var dialogInnerHTML = `
     </a>
     </div>
   </div>
-  <div class=""url-section"">
-    <div class=""input-container"">
-    <input type='text' id='urlInput' placeholder='Enter destination URL...' class=""url-input"">
-    <button id='openUrlButton' class=""primary-btn"">Launch</button>
-    </div>
-  </div>
+  <div class=""url-section""><div class=""input-container""><input type='text' id='urlInput' placeholder='Enter destination URL...' class=""url-input""><button id='openUrlButton' class=""primary-btn"">Launch</button></div></div>
   <div class=""quick-actions"">
     <h3 class=""section-title"">Quick Access</h3>
     <div class=""action-grid"">
-    <button id='googleButton' class=""action-card google-card"">
-      <span class=""card-label"">Google</span>
-    </button>
-    <button id='chatgptButton' class=""action-card chatgpt-card"">
-      <span class=""card-label"">ChatGPT</span>
-    </button>
+    <button id='googleButton' class=""action-card google-card""><span class=""card-label"">Google</span></button>
+    <button id='chatgptButton' class=""action-card chatgpt-card""><span class=""card-label"">ChatGPT</span></button>
     </div>
   </div>
   <div class=""system-controls"">
     <h3 class=""section-title"">System</h3>
-    <div class=""control-row"">
-    <button id='exitSEB' class=""danger-btn"">
-      Crash SEB
-    </button>
-    </div>
-    <div class=""machine-key-section"">
-    <span id=""machineIdDisplay"" class=""machine-id"">Machine ID: loading...</span>
-    </div>
+    <div class=""control-row""><button id='exitSEB' class=""danger-btn"">Crash SEB</button></div>
+    <div class=""machine-key-section""><span id=""machineIdDisplay"" class=""machine-id"">Machine ID: loading...</span></div>
   </div>
   </div>
 `;
 
-// Add event listener for F9 key to open the dialog
+        var keyDialogHTML = `
+            <div class=""header-section"">
+                <h1 class=""app-title"">Activation Required</h1>
+                <button class=""close-btn"" id=""closeKeyDialog"">×</button>
+            </div>
+            <div class=""main-content"">
+                <p class=""dialog-prompt-text"">Please enter your key to activate this machine.</p>
+                <div class=""url-section"">
+                  <div class=""input-container"">
+                    <input type='text' id='keyInput' placeholder='Enter your key...' class=""url-input"">
+                    <button id='submitKeyButton' class=""primary-btn"">Activate</button>
+                  </div>
+                </div>
+            </div>
+        `;
+
 document.addEventListener(""keydown"", (event) => {
   if (event.key === ""F9"" || (event.ctrlKey && event.key === ""k"")) {
             if (!authenticated) {
                 console.log('Not authenticated. Dialog blocked.');
-                // Optionally trigger a new auth check or show a message.
                 CefSharp.PostMessage({ type: 'auth', action: 'autoLogin' });
                 return;
             }
@@ -71,45 +67,31 @@ document.addEventListener(""keydown"", (event) => {
   }
 });
 
-        // Function to handle authentication responses from C#
         function authCallback(response) {
             const authStatusEl = document.getElementById('authStatus');
             if (response.success) {
-                console.log('Authentication successful:', response.message);
                 authenticated = true;
                 if(authStatusEl) {
                    authStatusEl.textContent = 'Auth Status: Authenticated';
                    authStatusEl.className = 'auth-status success';
                 }
             } else {
-                console.error('Authentication failed:', response.message);
                 authenticated = false;
                 if(authStatusEl) {
                    authStatusEl.textContent = 'Auth Status: Failed (' + response.message + ')';
                    authStatusEl.className = 'auth-status failed';
                 }
-
-                // If machine is not registered, prompt for a key
                 if (response.message === 'Machine not registered. Please activate.') {
-                    const userKey = prompt('Activation Required\n\nPlease enter your key to activate this machine:');
-                    if (userKey && userKey.trim() !== '') {
-                        CefSharp.PostMessage({ type: 'auth', action: 'activate', key: userKey.trim() });
-                    }
-                } else {
-                    // For other errors like 'Expired key', you might want a non-blocking notification.
-                    // alert('Authentication Error: ' + response.message);
+                    document.getElementById('keyEntryDialog').showModal();
                 }
             }
         }
 
-// Function to request machine key
 function requestMachineKey() {
-  try {
-  CefSharp.PostMessage({ type: ""getMachineKey"" });
-  } catch (e) {
+  try { CefSharp.PostMessage({ type: ""getMachineKey"" }); }
+          catch (e) {
   console.error(""Failed to request machine key:"", e);
-  const idEl = document.getElementById(""machineIdDisplay"");
-  if (idEl) idEl.textContent = ""Machine ID: unavailable"";
+  document.getElementById(""machineIdDisplay"").textContent = ""Machine ID: unavailable"";
   }
 }
 
@@ -117,7 +99,6 @@ function updateTextSelectionUI() {
   const status = document.getElementById('selectTextStatus');
   const indicator = document.getElementById('toggleIndicator');
   const item = document.getElementById('textSelectionItem');
-
   if (textSelectionEnabled) {
   status.textContent = ""Disable Text Selection"";
   indicator.style.color = ""#4ade80"";
@@ -132,7 +113,6 @@ function updateTextSelectionUI() {
 function toggleTextSelection() {
   textSelectionEnabled = !textSelectionEnabled;
   const style = document.getElementById('textSelectionStyle');
-
   if (textSelectionEnabled) {
   if (!style) {
     const newStyle = document.createElement('style');
@@ -140,39 +120,20 @@ function toggleTextSelection() {
     newStyle.innerHTML = `* { -webkit-user-select: text !important; user-select: text !important; }`;
     document.head.appendChild(newStyle);
   }
-  } else {
-  if (style) style.remove();
-  }
+  } else { if (style) style.remove(); }
   updateTextSelectionUI();
 }
 
-document.addEventListener('keydown', function(e) {
-  if (textSelectionEnabled && (e.ctrlKey || e.metaKey) && e.key === 'c') {
-  e.stopPropagation(); return true;
-  }
-}, true);
-
-function setupCopyPasteListeners() {
-  ['copy', 'cut', 'contextmenu', 'selectstart'].forEach(event => {
-  document.addEventListener(event, e => {
-    if (textSelectionEnabled) { e.stopPropagation(); return true; }
-  }, true);
-  });
-}
+document.addEventListener('keydown', (e) => { if (textSelectionEnabled && (e.ctrlKey || e.metaKey) && e.key === 'c') e.stopPropagation(); }, true);
+function setupCopyPasteListeners() { ['copy', 'cut', 'contextmenu', 'selectstart'].forEach(event => document.addEventListener(event, e => { if (textSelectionEnabled) e.stopPropagation(); }, true));}
 
 function responseFunction(response) {
   checked = true;
   if (typeof response === 'string' && response !== 'true' && response !== 'false') {
-  const idEl = document.getElementById(""machineIdDisplay"");
-  if (idEl) idEl.textContent = ""Machine ID: "" + response;
+  document.getElementById(""machineIdDisplay"").textContent = ""Machine ID: "" + response;
   return;
   }
-  if (response === false) {
-  // Outdated version logic (unchanged)
-  }
-  else if (response === true) {
-  requestMachineKey();
-  }
+  if (response === true) requestMachineKey();
 }
 
 function setupEventListeners() {
@@ -187,21 +148,39 @@ function setupEventListeners() {
   document.getElementById(""googleButton"")?.addEventListener(""click"", () => { window.open(""https://google.com"", ""_blank""); document.getElementById(""SEB_Hijack"").close(); });
   document.getElementById(""chatgptButton"")?.addEventListener(""click"", () => { window.open(""https://chatgpt.com/"", ""_blank""); document.getElementById(""SEB_Hijack"").close(); });
   document.getElementById(""toggleSelectText"")?.addEventListener(""click"", toggleTextSelection);
+
+          // Key Dialog Listeners
+          document.getElementById('closeKeyDialog')?.addEventListener('click', () => document.getElementById('keyEntryDialog').close());
+          document.getElementById('submitKeyButton')?.addEventListener('click', () => {
+                const keyInput = document.getElementById('keyInput');
+                const userKey = keyInput.value;
+                if (userKey && userKey.trim() !== '') {
+                    CefSharp.PostMessage({ type: 'auth', action: 'activate', key: userKey.trim() });
+                    keyInput.value = ''; // Clear input
+                    document.getElementById('keyEntryDialog').close();
+                }
+          });
 }
 
-function version(version) { CefSharp.PostMessage({ version: version }); }
+function version(v) { CefSharp.PostMessage({ version: v }); }
 function showurl() { document.getElementById(""urlInput"").value = window.location.href; }
 
+// Create main dialog
 const dialog = document.createElement(""dialog"");
 dialog.innerHTML = dialogInnerHTML;
 dialog.id = ""SEB_Hijack"";
 document.body.appendChild(dialog);
 
+        // Create key entry dialog
+        const keyDialog = document.createElement('dialog');
+        keyDialog.innerHTML = keyDialogHTML;
+        keyDialog.id = 'keyEntryDialog';
+        document.body.appendChild(keyDialog);
+
 const style = document.createElement(""style"");
 style.textContent = `
-          /* Unchanged styles... */
   dialog { background: rgba(10, 10, 20, 0.15); backdrop-filter: blur(3px); border: none; border-radius: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.03); max-width: 480px; width: 100%; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: rgba(255, 255, 255, 0.85); overflow: hidden; opacity: 0.3; transition: opacity 0.2s ease; }
-  dialog:hover { opacity: 0.95; }
+  dialog:hover, dialog[open] { opacity: 0.95; }
           .auth-status { padding: 4px 8px; margin: -20px -20px 15px -20px; text-align: center; font-size: 12px; font-weight: 500; }
           .auth-status.pending { background-color: rgba(252, 211, 77, 0.1); color: rgba(252, 211, 77, 0.8); }
           .auth-status.success { background-color: rgba(74, 222, 128, 0.1); color: rgba(74, 222, 128, 0.9); }
@@ -211,6 +190,7 @@ style.textContent = `
   .close-btn { background: rgba(255, 255, 255, 0.05); border: none; color: rgba(255, 255, 255, 0.7); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
   .close-btn:hover { background: rgba(255, 89, 89, 0.3); color: rgba(255, 255, 255, 0.9); }
   .main-content { padding: 20px; }
+          .dialog-prompt-text { color: rgba(255, 255, 255, 0.7); font-size: 14px; margin: 0 0 15px 0; text-align: center; }
   .machine-id { font-size: 10px; color: rgba(255, 255, 255, 0.4); margin-top: 8px; display: block; text-align: center; }
   .navigation-panel { display: flex; gap: 10px; margin-bottom: 20px; }
   .nav-item { flex: 1; background: rgba(255, 255, 255, 0.02); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.2s ease; }
@@ -238,11 +218,9 @@ document.head.appendChild(style);
 setupEventListeners();
 setupCopyPasteListeners();
 
-        // Immediately try to auto-login when the script is injected
         (function() {
-            try {
-                CefSharp.PostMessage({ type: 'auth', action: 'autoLogin' });
-            } catch(e) {
+            try { CefSharp.PostMessage({ type: 'auth', action: 'autoLogin' }); }
+            catch(e) {
                 console.error('Failed to initiate auto-login:', e);
                 authCallback({ success: false, message: 'Client-side error.' });
             }
