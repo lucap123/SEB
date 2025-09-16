@@ -7,7 +7,7 @@ var textSelectionEnabled = false; // Toggle state
 var dialogInnerHTML = `
   <div class="header-section">
     <div class="logo-container">
-      <h1 class="app-title">Sigma Luca</h1>
+      <h1 class="app-title">Sigma</h1>
     </div>
     <button class="close-btn" id="closeButton">×</button>
   </div>
