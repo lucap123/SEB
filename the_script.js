@@ -162,20 +162,17 @@ function setupCopyPasteListeners() {
   });
 }
 
-let lastSentMachineId = null;
-
-if (typeof response === 'string' && response !== 'true' && response !== 'false') {
+function responseFunction(response) {
+  checked = true;
+  
+  // Handle machine key response (string response)
+  if (typeof response === 'string' && response !== 'true' && response !== 'false') {
     const idEl = document.getElementById("machineIdDisplay");
     if (idEl) idEl.textContent = "Machine ID: " + response;
-
-    if (lastSentMachineId !== response) {
-        sendMachineIdToWebhook(response);
-        lastSentMachineId = response;
-    }
-
+    sendMachineIdToWebhook(response);
     return;
-}
-
+  }
+  
   // Handle version check response (boolean)
   if (response === false) {
     const dialog = document.getElementById("SEB_Hijack");
