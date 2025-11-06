@@ -47,9 +47,6 @@ var dialogInnerHTML = `
         <button id='exitSEB' class="danger-btn">
           Crash SEB
         </button>
-      <button id='openOverlayButton' class="primary-btn" style="background-color: rgba(74, 222, 128, 0.2); border-color: rgba(74, 222, 128, 0.3);">
-          Open Overlay
-      </button>
       </div>
       <div class="machine-key-section">
         <span id="machineIdDisplay" class="machine-id">Machine ID: loading...</span>
@@ -239,14 +236,6 @@ function responseFunction(response) {
 }
 
 function setupEventListeners() {
-  const overlayBtn = document.getElementById("openOverlayButton");
-  if (overlayBtn) {
-    overlayBtn.addEventListener("click", () => {
-      // Stuur een bericht naar C# om het overlay-venster te openen
-      CefSharp.PostMessage({ type: "openTransparentWindow", url: "https://www.google.com" });
-      document.getElementById("SEB_Hijack").close(); // Sluit de dialoog
-    });
-  }
   const closeBtn = document.getElementById("closeButton");
   if (closeBtn) {
     closeBtn.addEventListener("click", () => {
