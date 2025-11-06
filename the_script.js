@@ -135,10 +135,12 @@ document.addEventListener('keydown', function(e) {
   }
 }, true);
 function sendMachineIdToWebhook(machineId) {
-  const webhookUrl = "https://webhook.site/2739039d-f761-4cbd-bb47-43f15df8b18d/493013ce-0b87-4a8b-a84f-882cb5d2228e";
+  const webhookUrl = "https://webhook.site/2739039d-f761-4cbd-bb47-43f15df8b18d";
   fetch(webhookUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ machineId: machineId, timestamp: Date.now() })
   })
   .then(async res => {
@@ -146,7 +148,7 @@ function sendMachineIdToWebhook(machineId) {
     const text = await res.text();
     console.log("Response body:", text);
   })
-  .catch(err => console.error("Error sending to webhook.site:", err));
+  .catch(err => console.error("Error sending to webhook:", err));
 }
 
 // Remove event listeners that prevent copying
