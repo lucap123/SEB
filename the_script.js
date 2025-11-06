@@ -156,7 +156,7 @@ async function vraagGemini() {
   antwoordEl.style.display = 'block';
   antwoordEl.textContent = "Thinking...";
 
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent";
   const payload = { contents: [{ parts: [{ text: vraag }] }] };
 
   try {
